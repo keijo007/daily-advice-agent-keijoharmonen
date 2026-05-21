@@ -1,0 +1,46 @@
+# ============================================================================
+# Daily Insight Agent - Python Dependencies
+# ============================================================================
+# Install with: pip install -r requirements.txt
+
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# OpenAI API
+openai==1.3.0
+
+# RSS Parsing
+feedparser==6.0.10
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Database
+sqlite3  # Included in Python stdlib
+
+# Data Validation
+pydantic==2.5.0
+
+# Scheduling (for future background tasks)
+apscheduler==3.10.4
+
+# HTTP Requests (for RSS fetching)
+requests==2.31.0
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Type Checking (optional, for development)
+mypy==1.7.0
+
+# ============================================================================
+# NOTES FOR FUTURE EXTENSIONS
+# ============================================================================
+# When adding:
+# - YouTube transcripts: youtube-transcript-api, pytube
+# - Telegram bot: python-telegram-bot
+# - Advanced NLP: sentence-transformers, scikit-learn
+# - Vector search: chromadb, faiss-cpu
+# - Web scraping: beautifulsoup4, selenium

@@ -1,0 +1,28 @@
+"""
+Collectors package - data input layer for Daily Insight Agent.
+
+All collectors follow the same pattern:
+1. Inherit from BaseCollector
+2. Implement collect() → List[ContentItem]
+3. Return normalized, standardized data
+
+This makes it easy to add new sources without changing agent logic.
+"""
+
+from app.collectors.base_collector import BaseCollector
+from app.collectors.diary_collector import DiaryCollector
+from app.collectors.whatsapp_export_collector import WhatsAppCollector
+from app.collectors.rss_collector import RSSCollector
+from app.collectors.goals_collector import GoalsCollector
+from app.collectors.youtube_collector import YouTubeCollector
+from app.collectors.telegram_collector import TelegramCollector
+
+__all__ = [
+    "BaseCollector",
+    "DiaryCollector",
+    "WhatsAppCollector",
+    "RSSCollector",
+    "GoalsCollector",
+    "YouTubeCollector",
+    "TelegramCollector",
+]
