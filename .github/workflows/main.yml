@@ -29,7 +29,7 @@ jobs:
       
       - name: Generate daily insight
         env:
-          OPENAI_API_KEY: ${{ secrets.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 }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
