@@ -179,7 +179,9 @@ Settings → Pages
 
 - [`.github/README.md`](.github/README.md) - GitHub Actions ohjeet
 - [`BUDGET_DEPLOYMENT.md`](BUDGET_DEPLOYMENT.md) - Yksityiskohtainen opas
-- **[`ARCHITECTURE.md`](ARCHITECTURE.md) - TEKNINEN RAKENNE (AI & kehittäjille!)**
+- **[`GITHUB_ACTIONS_SAFE_SETUP.md`](GITHUB_ACTIONS_SAFE_SETUP.md) - TURVALLINEN SETUP!**
+- **[`GITHUB_ACTIONS_SUMMARY.md`](GITHUB_ACTIONS_SUMMARY.md) - Yhteenveto**
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - Tekninen rakenne (AI & kehittäjille)
 
 ---
 

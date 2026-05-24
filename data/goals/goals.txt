@@ -1,0 +1,57 @@
+# 2026 Personal Goals
+
+## Primary Goals (3-12 months)
+
+### 1. Ship the AI Daily Insight Agent
+- Status: In Progress
+- Completion: By end of June 2026
+- Success Criteria: Full system deployed, daily emails working, 2+ weeks of continuous operation
+- Why: Want to practice agent architecture with real-world data and iterate based on actual insights
+- Related habits: Deep work, collaboration, reflection
+
+### 2. Improve Collaboration and Communication
+- Status: In Progress
+- Completion: Ongoing throughout 2026
+- Success Criteria: Ask for help within 1 hour of getting stuck (not 3), participate in 2 team brainstorms/week
+- Why: Isolated problem-solving works for code but hurts team dynamics
+- Related habits: Reach out, schedule collaborative time, share progress early
+
+### 3. Read and Synthesize Ideas from Multiple Sources
+- Status: Starting
+- Completion: Read 2 books by end of Q2, follow 5 RSS feeds
+- Success Criteria: Apply one learning per week to current work
+- Why: Want broader perspective beyond immediate work; RSS feeds in Daily Agent helps with this
+- Related habits: Daily learning, cross-domain thinking
+
+### 4. Establish Consistent Creative Time
+- Status: Starting
+- Completion: 6-9 PM daily, 3+ evenings per week
+- Success Criteria: Ship one side project by September
+- Why: Know I'm most creative in evening; need protected time for this
+- Related habits: Creative work, experimentation
+
+## Supporting Goals (Monthly)
+
+### May 2026
+- [ ] Deploy Daily Insight Agent to production
+- [ ] Process 500+ items through multi-source collection
+- [ ] Identify 3 thinking patterns through Reflection Agent
+- [ ] Make one team decision collaboratively instead of independently
+
+### June 2026
+- [ ] Publish project documentation
+- [ ] Extend agent system with custom reasoning
+- [ ] Have monthly 1:1 check-in focused on collaboration
+
+## Metrics to Track
+- Commits per day (indicator of output)
+- Questions asked per week (indicator of collaboration)
+- Items processed daily (system health)
+- Insights acted upon (practical value)
+- Side projects started (creativity)
+
+## Notes
+- Goals are learnable and trackable (SMART)
+- Interconnected: shipping agent helps reading/learning goals
+- Include both technical and interpersonal development
+- Update monthly based on what's actually happening

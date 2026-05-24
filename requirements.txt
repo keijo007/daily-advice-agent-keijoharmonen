@@ -17,7 +17,7 @@ feedparser==6.0.10
 python-dotenv==1.0.0
 
 # Database
-# Included in Python stdlib
+# sqlite3 - Included in Python stdlib (no pip install needed)
 
 # Data Validation
 pydantic==2.5.0

@@ -1,0 +1,26 @@
+# RSS Feed Sources
+# Add one URL per line. The system will fetch the latest 10 entries from each feed daily.
+# This is a starting template—customize based on your interests.
+
+# Technology & AI
+https://feeds.arstechnica.com/arstechnica/index
+https://www.theverge.com/rss/index.xml
+https://news.ycombinator.com/rss
+https://feeds.openai.com/
+
+# Personal Development & Psychology
+https://feeds.farnamstreetblog.com/
+https://feeds.james-clear.com/
+https://www.psychologytoday.com/basics/rss.xml
+
+# Science & Learning
+https://feeds.nature.com/news/nature-research/
+https://feeds.aeon.co/philosophy
+https://feeds.scientific-american.com/
+
+# Product & Design
+https://www.producthunt.com/feed.xml
+https://feeds.webdesignerdepot.com/
+
+# Optional: Add your own subscriptions below
+# https://example.com/feed.xml
