@@ -34,7 +34,7 @@ jobs:
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: |
-          python Daily-Advice-Agent/scripts/generate_insight.py
+          python scripts/generate_insight.py
       
       - name: Commit and push results
         run: |
