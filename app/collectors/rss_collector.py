@@ -153,7 +153,7 @@ class RSSCollector(BaseCollector):
         return items
     
     def _parse_timestamp(self, entry: dict) -> datetime:
-        \"\"\"Extract and parse timestamp from RSS entry.\"\"\"
+        """Extract and parse timestamp from RSS entry."""
         try:
             # Try published date first
             if "published_parsed" in entry:
