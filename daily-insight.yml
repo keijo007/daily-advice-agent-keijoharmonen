@@ -1,0 +1,54 @@
+name: Daily Insight Generator
+
+on:
+  schedule:
+    # Suoritetaan joka päivä 06:00 UTC (klo 8 Suomessa kesällä)
+    - cron: '0 6 * * *'
+  
+  # Voit myös ajaa manuaalisesti
+  workflow_dispatch:
+
+jobs:
+  generate-insight:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'  # ← Cachaa pip-paketti (nopeutti ~50s)
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Generate daily insight
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        run: |
+          python scripts/generate_insight_safe.py
+      
+      - name: Commit and push results
+        run: |
+          git config user.email "action@github.com"
+          git config user.name "Daily Insight Bot"
+          git add data/daily_insights/
+          git add index.html
+          git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git push
+      
+      - name: Display generated files
+        run: |
+          echo "📊 Generated files:"
+          ls -la data/daily_insights/ || echo "No insights directory"
+          echo ""
+          echo "📄 Latest index:"
+          head -20 index.html || echo "No index.html"
