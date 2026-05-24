@@ -131,7 +131,6 @@ Remember:
       user_message=user_message,
       max_tokens=config.MAX_TOKENS_READER,
     )
-            )
             
             print("  ✓ Analysis complete")
             return result
