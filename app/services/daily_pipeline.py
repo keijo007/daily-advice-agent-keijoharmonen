@@ -161,7 +161,7 @@ class DailyPipeline:
                 goals=goals,
                 recent_diary=recent_diary,
         previous_insights=None,
-            
+            )
             # Reflection Agent: analyze patterns
             print("  [2/3] Reflection Agent...")
             reflection_output = self.reflection_agent.think(agent_input)
