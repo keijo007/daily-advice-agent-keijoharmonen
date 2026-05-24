@@ -160,11 +160,7 @@ class DailyPipeline:
                 new_items=new_items,
                 goals=goals,
                 recent_diary=recent_diary,
-            )
-            
-            # Reader Agent: summarize new content
-            print("\n  [1/3] Reader Agent...")
-            reader_output = self.reader_agent.think(agent_input)
+        previous_insights=None,
             
             # Reflection Agent: analyze patterns
             print("  [2/3] Reflection Agent...")

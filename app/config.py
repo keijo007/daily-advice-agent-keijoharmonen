@@ -24,6 +24,13 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+
+def get_env_path(name: str, default_path: Path) -> str:
+    """Return an environment path, or the default if unset or blank."""
+    value = os.getenv(name, "").strip()
+    return value or str(default_path)
+
+
 class Config:
     """Base configuration for Daily Insight Agent."""
 
@@ -43,7 +50,7 @@ class Config:
 
     # ========== DATA SOURCES ==========
     # OneDrive-synced paths (user-specific, set in .env)
-    GOALS_FILE_PATH = os.getenv("GOALS_FILE_PATH", str(GOALS_DIR / "goals.txt"))
+    GOALS_FILE_PATH = get_env_path("GOALS_FILE_PATH", GOALS_DIR / "goals.txt")
     RSS_SOURCES_FILE = DATA_DIR / "rss_sources.txt"
 
     # ========== AGENT CONFIGURATION ==========
