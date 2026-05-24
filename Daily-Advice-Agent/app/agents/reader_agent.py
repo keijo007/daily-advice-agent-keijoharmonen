@@ -45,7 +45,7 @@ import json
 from typing import List, Dict, Any
 from app.agents.base_agent import BaseAgent
 from app.models import AgentInput, ContentItem
-from app.services.openai_client import call_openai_json
+from app.services.openai_client import create_openai_client
 from app.config import config
 
 
