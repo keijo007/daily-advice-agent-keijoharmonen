@@ -30,24 +30,8 @@ class OneDriveClient:
             self._init_graph_client()
     
     def _init_graph_client(self):
-        """Initialize Microsoft Graph API client."""
-        try:
-            from azure.identity import ClientSecretCredential
-            from azure.storage.filedatalake import DataLakeServiceClient
-            
-            self.credential = ClientSecretCredential(
-                tenant_id=self.tenant_id,
-                client_id=self.client_id,
-                client_secret=self.client_secret
-            )
-            
-            logger.info("✓ OneDrive client initialized successfully")
-        except ImportError:
-            logger.warning("⚠ azure-identity not installed. Install with: pip install azure-identity azure-storage-file-datalake")
-            self.enabled = False
-        except Exception as e:
-            logger.error(f"✗ Failed to initialize OneDrive: {e}")
-            self.enabled = False
+        """Initialize OneDrive client (requests-based)."""
+        logger.info("✓ OneDrive client ready (requests-based)")
 
     def _get_access_token(self) -> Optional[str]:
         """Get Microsoft Graph access token."""
