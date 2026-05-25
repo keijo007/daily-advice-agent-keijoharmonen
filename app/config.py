@@ -51,6 +51,18 @@ class Config:
     # ========== DATA SOURCES ==========
     # OneDrive-synced paths (user-specific, set in .env)
     GOALS_FILE_PATH = get_env_path("GOALS_FILE_PATH", GOALS_DIR / "goals.txt")
+    ONEDRIVE_DAILY_INSIGHTS_SHARE_URL = os.getenv(
+        "ONEDRIVE_DAILY_INSIGHTS_SHARE_URL",
+        "",
+    )
+    ONEDRIVE_DIARY_SHARE_URL = os.getenv(
+        "ONEDRIVE_DIARY_SHARE_URL",
+        "",
+    )
+    ONEDRIVE_DIARY2_SHARE_URL = os.getenv(
+        "ONEDRIVE_DIARY2_SHARE_URL",
+        "",
+    )
     ONEDRIVE_DIARY_FILE_PATH = os.getenv(
         "ONEDRIVE_DIARY_FILE_PATH",
         "",

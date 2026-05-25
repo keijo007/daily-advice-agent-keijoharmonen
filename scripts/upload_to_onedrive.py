@@ -96,11 +96,19 @@ def upload_to_onedrive():
         summary_text = build_text_summary(data)
 
         # Upload to OneDrive as text
-        base_path = config.ONEDRIVE_DAILY_INSIGHTS_PATH
-        onedrive_path = f"{base_path}/{today}.txt"
-        print(f"📤 Uploading to: {onedrive_path}")
+        if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
+            print("📤 Uploading to shared folder link")
+            success = client.upload_to_shared_folder(
+                config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
+                f"{today}.txt",
+                summary_text,
+            )
+        else:
+            base_path = config.ONEDRIVE_DAILY_INSIGHTS_PATH
+            onedrive_path = f"{base_path}/{today}.txt"
+            print(f"📤 Uploading to: {onedrive_path}")
 
-        success = client.write_file(onedrive_path, summary_text)
+            success = client.write_file(onedrive_path, summary_text)
         
         if success:
             print(f"✓ Successfully uploaded to OneDrive")

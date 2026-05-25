@@ -53,6 +53,11 @@ class DiaryCollector(BaseCollector):
         Returns:
             List of ContentItem objects, one per file
         """
+        if config.ONEDRIVE_DIARY_SHARE_URL or config.ONEDRIVE_DIARY2_SHARE_URL:
+            client = OneDriveClient()
+            if client.enabled:
+                return self._collect_from_shared_links(client)
+
         if config.ONEDRIVE_DIARY_FILE_PATH:
             client = OneDriveClient()
             if client.enabled:
@@ -64,6 +69,35 @@ class DiaryCollector(BaseCollector):
                 return self._collect_from_onedrive(client)
 
         return self._collect_from_local()
+
+    def _collect_from_shared_links(self, client: OneDriveClient) -> List[ContentItem]:
+        """Collect diary entries from OneDrive share links."""
+        items: List[ContentItem] = []
+        share_urls = [
+            config.ONEDRIVE_DIARY_SHARE_URL,
+            config.ONEDRIVE_DIARY2_SHARE_URL,
+        ]
+
+        for share_url in [url for url in share_urls if url]:
+            content = client.read_shared_file(share_url)
+            if not content:
+                print(f"⚠️  OneDrive share not readable: {share_url}")
+                continue
+
+            title = "Shared Diary"
+            timestamp = datetime.now()
+
+            item = self._create_item(
+                title=title,
+                content=content,
+                author="You",
+                timestamp=timestamp,
+                raw_path=f"onedrive_share:{share_url}",
+            )
+            items.append(item)
+            print(f"  ✓ Loaded shared diary entry")
+
+        return items
 
     def _collect_from_onedrive_file(self, client: OneDriveClient) -> List[ContentItem]:
         """Collect a single diary entry from OneDrive file path."""
