@@ -43,7 +43,7 @@ jobs:
           git add data/daily_insights/
           git add index.html
           git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
-          git push origin main
+          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
