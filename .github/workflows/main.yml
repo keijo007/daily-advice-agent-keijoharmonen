@@ -48,7 +48,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload to OneDrive (optional)
-        if: ${{ secrets.AZURE_CLIENT_ID != '' }}
+        if: secrets.AZURE_CLIENT_ID != ''
         run: |
           python scripts/upload_to_onedrive.py
         env:
