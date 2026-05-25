@@ -12,8 +12,8 @@
     "Error occurred during analysis"
   ],
   "sources_used": [
-    "diary",
     "rss",
+    "diary",
     "goals"
   ]
 }
