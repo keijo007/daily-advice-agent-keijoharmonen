@@ -160,15 +160,52 @@ class DailyPipeline:
                 new_items=new_items,
                 goals=goals,
                 recent_diary=recent_diary,
-        previous_insights=None,
+                previous_insights=None,
             )
+            
+            # Reader Agent: summarize new content
+            print("\n  [1/3] Reader Agent...")
+            try:
+                reader_output = self.reader_agent.think(agent_input)
+            except Exception as e:
+                print(f"  ✗ Error in Reader Agent: {e}")
+                reader_output = {
+                    "summary": "Error analyzing content",
+                    "key_topics": [],
+                    "important_quotes": [],
+                    "facts_vs_opinions": {"facts": [], "opinions": [], "interpretations": []},
+                    "sources_used": [],
+                }
+            
             # Reflection Agent: analyze patterns
             print("  [2/3] Reflection Agent...")
-            reflection_output = self.reflection_agent.think(agent_input)
+            try:
+                reflection_output = self.reflection_agent.think(agent_input)
+            except Exception as e:
+                print(f"  ✗ Error in Reflection Agent: {e}")
+                reflection_output = {
+                    "key_observations": [],
+                    "thinking_biases_detected": [],
+                    "alignment_with_goals": {"aligned": [], "misaligned": [], "unclear": []},
+                    "patterns_noticed": [],
+                    "blind_spots": [],
+                    "hypothesis": "Unable to complete analysis",
+                    "uncertainties": [],
+                }
             
             # Coach Agent: synthesize advice
             print("  [3/3] Coach Agent...")
-            coach_output = self.coach_agent.think(agent_input)
+            try:
+                coach_output = self.coach_agent.think(agent_input)
+            except Exception as e:
+                print(f"  ✗ Error in Coach Agent: {e}")
+                coach_output = {
+                    "practical_tip": "Unable to generate advice due to error",
+                    "one_day_action": "",
+                    "possible_project_idea": None,
+                    "warnings": [],
+                    "confidence": 0.0,
+                }
             
             print("✓ Analysis complete\n")
             
