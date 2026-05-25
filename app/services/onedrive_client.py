@@ -205,6 +205,71 @@ class OneDriveClient:
         except Exception as e:
             logger.error(f"✗ Error reading diary files: {e}")
             return []
+    
+    def write_file(self, file_path: str, content: str) -> bool:
+        """
+        Write file to OneDrive.
+        
+        Args:
+            file_path: Path like "/DailyInsights/2026-05-25.json"
+            content: File contents to write
+        
+        Returns:
+            True if successful, False otherwise
+        
+        Example:
+            success = client.write_file("/DailyInsights/2026-05-25.json", json_content)
+        """
+        if not self.enabled:
+            logger.warning("OneDrive client not enabled - check AZURE_CLIENT_ID, etc.")
+            return False
+        
+        try:
+            import requests
+            
+            # Get access token
+            token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
+            token_data = {
+                "grant_type": "client_credentials",
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "scope": "https://graph.microsoft.com/.default"
+            }
+            
+            token_response = requests.post(token_url, data=token_data)
+            if token_response.status_code != 200:
+                logger.error(f"✗ Failed to get access token: {token_response.status_code}")
+                return False
+            
+            access_token = token_response.json()["access_token"]
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+            
+            # Upload file to OneDrive
+            # Path format: /drive/root:/path/to/file:/content
+            upload_url = f"https://graph.microsoft.com/v1.0/me/drive/root:{file_path}:/content"
+            
+            upload_response = requests.put(upload_url, headers=headers, data=content.encode('utf-8'))
+            
+            if upload_response.status_code in [200, 201]:
+                logger.info(f"✓ Uploaded file to OneDrive: {file_path}")
+                return True
+            else:
+                logger.error(f"✗ Failed to upload file: {upload_response.status_code}")
+                logger.debug(f"Response: {upload_response.text}")
+                return False
+        
+        except ImportError:
+            logger.error("requests library not installed")
+            return False
+        except KeyError as e:
+            logger.error(f"✗ Invalid token response: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"✗ Error writing to OneDrive: {e}")
+            return False
 
 
 # ============================================================================

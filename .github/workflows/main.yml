@@ -43,7 +43,19 @@ jobs:
           git add data/daily_insights/
           git add index.html
           git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
-          git push
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Upload to OneDrive (optional)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' }}
+        run: |
+          python scripts/upload_to_onedrive.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       
       - name: Display generated files
         run: |
