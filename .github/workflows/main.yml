@@ -8,6 +8,10 @@ on:
   # Voit myös ajaa manuaalisesti
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   generate-insight:
     runs-on: ubuntu-latest
@@ -43,7 +47,7 @@ jobs:
           git add data/daily_insights/
           git add index.html
           git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git main
+          git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
