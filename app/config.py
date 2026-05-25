@@ -51,6 +51,18 @@ class Config:
     # ========== DATA SOURCES ==========
     # OneDrive-synced paths (user-specific, set in .env)
     GOALS_FILE_PATH = get_env_path("GOALS_FILE_PATH", GOALS_DIR / "goals.txt")
+    ONEDRIVE_DIARY_FILE_PATH = os.getenv(
+        "ONEDRIVE_DIARY_FILE_PATH",
+        "",
+    )
+    ONEDRIVE_DIARY_PATH = os.getenv(
+        "ONEDRIVE_DIARY_PATH",
+        "",
+    )
+    ONEDRIVE_DAILY_INSIGHTS_PATH = os.getenv(
+        "ONEDRIVE_DAILY_INSIGHTS_PATH",
+        "/MY LIFE/My Life Knowledge/AI_Thoughts",
+    )
     RSS_SOURCES_FILE = DATA_DIR / "rss_sources.txt"
 
     # ========== AGENT CONFIGURATION ==========

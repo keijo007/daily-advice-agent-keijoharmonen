@@ -48,6 +48,90 @@ class OneDriveClient:
         except Exception as e:
             logger.error(f"✗ Failed to initialize OneDrive: {e}")
             self.enabled = False
+
+    def _get_access_token(self) -> Optional[str]:
+        """Get Microsoft Graph access token."""
+        if not self.enabled:
+            return None
+
+        try:
+            import requests
+
+            token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
+            token_data = {
+                "grant_type": "client_credentials",
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "scope": "https://graph.microsoft.com/.default",
+            }
+
+            token_response = requests.post(token_url, data=token_data)
+            if token_response.status_code != 200:
+                logger.error(f"✗ Failed to get access token: {token_response.status_code}")
+                return None
+
+            return token_response.json().get("access_token")
+
+        except Exception as e:
+            logger.error(f"✗ Error getting access token: {e}")
+            return None
+
+    def ensure_folder_path(self, folder_path: str) -> bool:
+        """Ensure a nested folder path exists in OneDrive."""
+        if not self.enabled:
+            return False
+
+        try:
+            import requests
+
+            access_token = self._get_access_token()
+            if not access_token:
+                return False
+
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            }
+
+            parts = [p for p in folder_path.strip("/").split("/") if p]
+            current_path = ""
+
+            for part in parts:
+                ok = self._create_folder(part, current_path, headers)
+                if not ok:
+                    return False
+                current_path = f"{current_path}/{part}" if current_path else part
+
+            return True
+        except Exception as e:
+            logger.error(f"✗ Error ensuring folder path: {e}")
+            return False
+
+    def _create_folder(self, name: str, parent_path: str, headers: dict) -> bool:
+        """Create a folder under the given parent path (idempotent)."""
+        import requests
+
+        if parent_path:
+            url = f"https://graph.microsoft.com/v1.0/me/drive/root:/{parent_path}:/children"
+        else:
+            url = "https://graph.microsoft.com/v1.0/me/drive/root/children"
+
+        body = {
+            "name": name,
+            "folder": {},
+            "@microsoft.graph.conflictBehavior": "fail",
+        }
+
+        response = requests.post(url, headers=headers, json=body)
+
+        if response.status_code in [200, 201]:
+            return True
+        if response.status_code == 409:
+            return True
+
+        logger.error(f"✗ Failed to create folder '{name}': {response.status_code}")
+        logger.debug(f"Response: {response.text}")
+        return False
     
     def read_file(self, file_path: str) -> Optional[str]:
         """
@@ -68,18 +152,10 @@ class OneDriveClient:
         
         try:
             import requests
-            
-            # Get access token
-            token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
-            token_data = {
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "scope": "https://graph.microsoft.com/.default"
-            }
-            
-            token_response = requests.post(token_url, data=token_data)
-            access_token = token_response.json()["access_token"]
+
+            access_token = self._get_access_token()
+            if not access_token:
+                return None
             
             # Get file from OneDrive using Microsoft Graph API
             # First, find the file
@@ -131,18 +207,10 @@ class OneDriveClient:
         
         try:
             import requests
-            
-            # Get access token
-            token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
-            token_data = {
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "scope": "https://graph.microsoft.com/.default"
-            }
-            
-            token_response = requests.post(token_url, data=token_data)
-            access_token = token_response.json()["access_token"]
+
+            access_token = self._get_access_token()
+            if not access_token:
+                return None
             
             # List files
             list_url = f"https://graph.microsoft.com/v1.0/me/drive/root:/{folder_path}:/children"
@@ -226,25 +294,23 @@ class OneDriveClient:
         
         try:
             import requests
-            
-            # Get access token
-            token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
-            token_data = {
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "scope": "https://graph.microsoft.com/.default"
-            }
-            
-            token_response = requests.post(token_url, data=token_data)
-            if token_response.status_code != 200:
-                logger.error(f"✗ Failed to get access token: {token_response.status_code}")
+
+            access_token = self._get_access_token()
+            if not access_token:
                 return False
-            
-            access_token = token_response.json()["access_token"]
+
+            folder_path = "/".join(file_path.strip("/").split("/")[:-1])
+            if folder_path:
+                if not self.ensure_folder_path(f"/{folder_path}"):
+                    return False
+
+            content_type = "application/json"
+            if file_path.endswith(".txt"):
+                content_type = "text/plain; charset=utf-8"
+
             headers = {
                 "Authorization": f"Bearer {access_token}",
-                "Content-Type": "application/json"
+                "Content-Type": content_type,
             }
             
             # Upload file to OneDrive

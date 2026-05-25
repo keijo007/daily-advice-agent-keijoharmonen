@@ -19,6 +19,51 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.services.onedrive_client import OneDriveClient
+from app.config import config
+
+
+def build_text_summary(data: dict) -> str:
+    """Build a readable text summary from the daily insight JSON."""
+    lines = []
+    lines.append(f"Date: {data.get('date', '')}")
+    lines.append("")
+    lines.append("Main insight:")
+    lines.append(data.get("main_insight", ""))
+    lines.append("")
+    lines.append("Practical tip:")
+    lines.append(data.get("practical_tip", ""))
+    lines.append("")
+    lines.append("One-day action:")
+    lines.append(data.get("one_day_action", ""))
+    lines.append("")
+    lines.append("Source summary:")
+    lines.append(data.get("source_summary", ""))
+    lines.append("")
+    lines.append("Self reflection:")
+    lines.append(data.get("self_reflection", ""))
+    lines.append("")
+    lines.append("Thinking biases detected:")
+    biases = data.get("thinking_biases_detected", [])
+    if isinstance(biases, list):
+        lines.extend([f"- {b}" for b in biases])
+    else:
+        lines.append(str(biases))
+    lines.append("")
+    lines.append("Uncertainties / warnings:")
+    warnings = data.get("uncertainties", [])
+    if isinstance(warnings, list):
+        lines.extend([f"- {w}" for w in warnings])
+    else:
+        lines.append(str(warnings))
+    lines.append("")
+    lines.append("Sources used:")
+    sources = data.get("sources_used", [])
+    if isinstance(sources, list):
+        lines.extend([f"- {s}" for s in sources])
+    else:
+        lines.append(str(sources))
+
+    return "\n".join(lines).strip() + "\n"
 
 
 def upload_to_onedrive():
@@ -46,13 +91,16 @@ def upload_to_onedrive():
         # Read the JSON file
         print(f"📂 Reading: {json_file}")
         with open(json_file, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        # Upload to OneDrive
-        onedrive_path = f"/DailyInsights/{today}.json"
+            data = json.load(f)
+
+        summary_text = build_text_summary(data)
+
+        # Upload to OneDrive as text
+        base_path = config.ONEDRIVE_DAILY_INSIGHTS_PATH
+        onedrive_path = f"{base_path}/{today}.txt"
         print(f"📤 Uploading to: {onedrive_path}")
-        
-        success = client.write_file(onedrive_path, content)
+
+        success = client.write_file(onedrive_path, summary_text)
         
         if success:
             print(f"✓ Successfully uploaded to OneDrive")
