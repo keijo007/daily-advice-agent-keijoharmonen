@@ -67,6 +67,10 @@ class Config:
         "ONEDRIVE_DIARY_FILE_PATH",
         "",
     )
+    ONEDRIVE_WEEKLY_FILE_PATH = os.getenv(
+        "ONEDRIVE_WEEKLY_FILE_PATH",
+        "",
+    )
     ONEDRIVE_DIARY_PATH = os.getenv(
         "ONEDRIVE_DIARY_PATH",
         "",

@@ -444,6 +444,8 @@ class OneDriveClient:
             content_type = "application/json"
             if file_path.endswith(".txt"):
                 content_type = "text/plain; charset=utf-8"
+            if file_path.endswith(".md"):
+                content_type = "text/markdown; charset=utf-8"
 
             headers = {
                 "Authorization": f"Bearer {access_token}",

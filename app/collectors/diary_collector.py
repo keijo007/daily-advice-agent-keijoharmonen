@@ -104,12 +104,36 @@ class DiaryCollector(BaseCollector):
         items: List[ContentItem] = []
         file_path = config.ONEDRIVE_DIARY_FILE_PATH
 
+        items.extend(self._collect_from_onedrive_file_path(
+            client,
+            file_path,
+            "Diary",
+        ))
+
+        if config.ONEDRIVE_WEEKLY_FILE_PATH:
+            items.extend(self._collect_from_onedrive_file_path(
+                client,
+                config.ONEDRIVE_WEEKLY_FILE_PATH,
+                "Weekly Reflection",
+            ))
+
+        return items
+
+    def _collect_from_onedrive_file_path(
+        self,
+        client: OneDriveClient,
+        file_path: str,
+        fallback_title: str,
+    ) -> List[ContentItem]:
+        """Collect a single OneDrive file into a diary item."""
+        items: List[ContentItem] = []
+
         content = client.read_file(file_path)
         if not content:
             print(f"⚠️  OneDrive diary file not found: {file_path}")
             return items
 
-        title = Path(file_path).stem
+        title = Path(file_path).stem or fallback_title
         timestamp = self._parse_timestamp_from_filename(Path(file_path).name)
 
         item = self._create_item(

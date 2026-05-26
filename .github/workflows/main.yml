@@ -42,8 +42,9 @@ jobs:
           ONEDRIVE_DAILY_INSIGHTS_SHARE_URL: "https://1drv.ms/f/c/fb436b6e01e2b556/IgDQ2XoqHUNtTbhooArtv_M3AfI5RJyLgUTzuHSSl9OUNHM?e=UAKBE6"
           ONEDRIVE_DIARY_SHARE_URL: "https://1drv.ms/t/c/fb436b6e01e2b556/IQCe88YLonb0QK1c0Z6sZwmyAb0eSO2mSZXv4E68dl7fYs4?e=KBrxUL"
           ONEDRIVE_DIARY2_SHARE_URL: "https://1drv.ms/t/c/fb436b6e01e2b556/IQDCd_gugRmoSqoCjXFhdTYxAY472Ap015v5ThWeW8NTs60?e=HLXaFe"
-          ONEDRIVE_DIARY_FILE_PATH: "/MY LIFE/My Life Knowledge/🟥-main/🟪Reflection.md"
-          ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY LIFE/My Life Knowledge/AI_Thoughts"
+          ONEDRIVE_DIARY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Reflection.md"
+          ONEDRIVE_WEEKLY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Thoughts.md"
+          ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY KNOWLEDGE/Knowledge Base/AI_Thoughts"
           ONEDRIVE_USER_ID: "keijohar@outlook.com"
         run: |
           python scripts/generate_insight_safe.py
@@ -72,8 +73,9 @@ jobs:
           ONEDRIVE_DAILY_INSIGHTS_SHARE_URL: "https://1drv.ms/f/c/fb436b6e01e2b556/IgDQ2XoqHUNtTbhooArtv_M3AfI5RJyLgUTzuHSSl9OUNHM?e=UAKBE6"
           ONEDRIVE_DIARY_SHARE_URL: "https://1drv.ms/t/c/fb436b6e01e2b556/IQCe88YLonb0QK1c0Z6sZwmyAb0eSO2mSZXv4E68dl7fYs4?e=KBrxUL"
           ONEDRIVE_DIARY2_SHARE_URL: "https://1drv.ms/t/c/fb436b6e01e2b556/IQDCd_gugRmoSqoCjXFhdTYxAY472Ap015v5ThWeW8NTs60?e=HLXaFe"
-          ONEDRIVE_DIARY_FILE_PATH: "/MY LIFE/My Life Knowledge/🟥-main/🟪Reflection.md"
-          ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY LIFE/My Life Knowledge/AI_Thoughts"
+          ONEDRIVE_DIARY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Reflection.md"
+          ONEDRIVE_WEEKLY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Thoughts.md"
+          ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY KNOWLEDGE/Knowledge Base/AI_Thoughts"
           ONEDRIVE_USER_ID: "keijohar@outlook.com"
       
       - name: Display generated files
