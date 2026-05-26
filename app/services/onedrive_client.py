@@ -183,7 +183,7 @@ class OneDriveClient:
                     "client_id": self.client_id,
                     "refresh_token": self.refresh_token,
                 }
-                if self.client_secret:
+                if self.client_secret and self.tenant_id != "consumers":
                     token_data["client_secret"] = self.client_secret
                 if self.refresh_scope:
                     token_data["scope"] = self.refresh_scope
