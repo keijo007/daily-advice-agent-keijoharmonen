@@ -23,10 +23,15 @@ class OneDriveClient:
         """Initialize OneDrive connection."""
         self.client_id = os.getenv("AZURE_CLIENT_ID", "")
         self.client_secret = os.getenv("AZURE_CLIENT_SECRET", "")
-        self.tenant_id = os.getenv("AZURE_TENANT_ID", "")
+        self.refresh_token = os.getenv("ONEDRIVE_REFRESH_TOKEN", "").strip()
+        self.tenant_id = os.getenv("ONEDRIVE_TENANT_ID", "").strip()
+        if not self.tenant_id:
+            self.tenant_id = os.getenv("AZURE_TENANT_ID", "").strip()
+        if not self.tenant_id and self.refresh_token:
+            self.tenant_id = "consumers"
         
         # Flag: is OneDrive integration enabled?
-        self.enabled = all([self.client_id, self.client_secret, self.tenant_id])
+        self.enabled = bool(self.client_id and self.tenant_id and (self.client_secret or self.refresh_token))
         
         if self.enabled:
             self._init_graph_client()
@@ -169,12 +174,22 @@ class OneDriveClient:
             import requests
 
             token_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"
-            token_data = {
-                "grant_type": "client_credentials",
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-                "scope": "https://graph.microsoft.com/.default",
-            }
+            if self.refresh_token:
+                token_data = {
+                    "grant_type": "refresh_token",
+                    "client_id": self.client_id,
+                    "refresh_token": self.refresh_token,
+                    "scope": "offline_access Files.ReadWrite",
+                }
+                if self.client_secret:
+                    token_data["client_secret"] = self.client_secret
+            else:
+                token_data = {
+                    "grant_type": "client_credentials",
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret,
+                    "scope": "https://graph.microsoft.com/.default",
+                }
 
             token_response = requests.post(token_url, data=token_data)
             if token_response.status_code != 200:
