@@ -16,6 +16,7 @@ from app.collectors.rss_collector import RSSCollector
 from app.collectors.goals_collector import GoalsCollector
 from app.collectors.youtube_collector import YouTubeCollector
 from app.collectors.telegram_collector import TelegramCollector
+from app.collectors.linkedin_export_collector import LinkedInExportCollector
 
 __all__ = [
     "BaseCollector",
@@ -25,4 +26,5 @@ __all__ = [
     "GoalsCollector",
     "YouTubeCollector",
     "TelegramCollector",
+    "LinkedInExportCollector",
 ]

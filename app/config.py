@@ -79,11 +79,33 @@ class Config:
         "ONEDRIVE_DAILY_INSIGHTS_PATH",
         "/MY LIFE/My Life Knowledge/AI_Thoughts",
     )
+    ONEDRIVE_LINKEDIN_EXPORT_PATH = os.getenv(
+        "ONEDRIVE_LINKEDIN_EXPORT_PATH",
+        "",
+    )
+    ONEDRIVE_WHATSAPP_EXPORT_PATH = os.getenv(
+        "ONEDRIVE_WHATSAPP_EXPORT_PATH",
+        "",
+    )
     RSS_SOURCES_FILE = DATA_DIR / "rss_sources.txt"
 
     # ========== AGENT CONFIGURATION ==========
     # How many recent diary entries to include in reflection
     DIARY_LOOKBACK_DAYS = int(os.getenv("DIARY_LOOKBACK_DAYS", 7))
+
+    TELEGRAM_LOOKBACK_DAYS = int(os.getenv("TELEGRAM_LOOKBACK_DAYS", 30))
+    TELEGRAM_CHANNELS = os.getenv("TELEGRAM_CHANNELS", "")
+    TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID", "")
+    TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH", "")
+    TELEGRAM_SESSION_STRING = os.getenv("TELEGRAM_SESSION_STRING", "")
+
+    YOUTUBE_LOOKBACK_DAYS = int(os.getenv("YOUTUBE_LOOKBACK_DAYS", 14))
+    YOUTUBE_CHANNEL_URLS = os.getenv("YOUTUBE_CHANNEL_URLS", "")
+    YOUTUBE_WHISPER_ENABLED = os.getenv("YOUTUBE_WHISPER_ENABLED", "false").lower() == "true"
+    YOUTUBE_WHISPER_MAX_MINUTES = int(os.getenv("YOUTUBE_WHISPER_MAX_MINUTES", 120))
+
+    LINKEDIN_LOOKBACK_DAYS = int(os.getenv("LINKEDIN_LOOKBACK_DAYS", 14))
+    WHATSAPP_LOOKBACK_DAYS = int(os.getenv("WHATSAPP_LOOKBACK_DAYS", 14))
     
     # Max tokens for API calls (keep cost reasonable)
     MAX_TOKENS_READER = int(os.getenv("MAX_TOKENS_READER", 1000))

@@ -36,11 +36,30 @@ from fastapi import FastAPI, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
 from app.services.daily_pipeline import DailyPipeline
 from app.services.storage import StorageService
 from app.config import config
+
+
+def _render_thinking_biases(thinking_biases: Any) -> str:
+    if not thinking_biases:
+        return ""
+
+    html = ""
+    for bias in thinking_biases:
+        if isinstance(bias, dict):
+            name = bias.get("bias_name") or bias.get("bias") or str(bias)
+            evidence = bias.get("evidence")
+            html += f"<li><strong>{name}</strong>"
+            if evidence:
+                html += f": {evidence}"
+            html += "</li>"
+        else:
+            html += f"<li>{bias}</li>"
+
+    return f"<div class=\"section\"><h2>⚠️ Thinking Patterns</h2><ul>{html}</ul></div>"
 
 # Create FastAPI app
 app = FastAPI(
@@ -320,7 +339,7 @@ def _render_insight_html(insight) -> str:
                     <p>{insight.self_reflection}</p>
                 </div>
                 
-                {f'<div class="section"><h2>⚠️ Thinking Patterns</h2><ul>{"".join([f"<li>{bias}</li>" for bias in insight.thinking_biases_detected])}</ul></div>' if insight.thinking_biases_detected else ''}
+                {_render_thinking_biases(insight.thinking_biases_detected)}
                 
                 <div class="action-box">
                     <h2>✅ Action for Today</h2>

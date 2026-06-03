@@ -38,6 +38,7 @@ from typing import List
 from app.collectors.base_collector import BaseCollector
 from app.models import ContentItem, SourceType
 from app.config import config
+from app.services.onedrive_client import OneDriveClient
 
 
 class WhatsAppCollector(BaseCollector):
@@ -63,29 +64,77 @@ class WhatsAppCollector(BaseCollector):
         Returns:
             List of ContentItem objects, one per conversation file
         """
-        items = []
-        
+        if config.ONEDRIVE_WHATSAPP_EXPORT_PATH:
+            client = OneDriveClient()
+            if client.enabled:
+                return self._collect_from_onedrive(client)
+
+        return self._collect_from_local()
+
+    def _collect_from_onedrive(self, client: OneDriveClient) -> List[ContentItem]:
+        items: List[ContentItem] = []
+        files = client.list_files(config.ONEDRIVE_WHATSAPP_EXPORT_PATH)
+        if not files:
+            print("⚠️  No WhatsApp export files found in OneDrive")
+            return items
+
+        export_files = [f for f in files if f.lower().endswith(".txt")]
+        print(f"💬 Found {len(export_files)} WhatsApp export files (OneDrive)")
+
+        for filename in export_files:
+            try:
+                content = client.read_file(
+                    f"{config.ONEDRIVE_WHATSAPP_EXPORT_PATH}/{filename}"
+                )
+                if not content:
+                    continue
+
+                summary = self._summarize_conversation(content)
+                timestamp = self._extract_timestamp_from_content(content)
+                title = f"WhatsApp: {Path(filename).stem}"
+
+                if not self._is_recent(timestamp):
+                    continue
+
+                item = self._create_item(
+                    title=title,
+                    content=summary,
+                    author="WhatsApp",
+                    timestamp=timestamp,
+                    raw_path=f"onedrive:{config.ONEDRIVE_WHATSAPP_EXPORT_PATH}/{filename}",
+                )
+                items.append(item)
+                print(f"  ✓ Loaded: {title}")
+            except Exception as e:
+                print(f"  ✗ Error reading {filename}: {e}")
+
+        return items
+
+    def _collect_from_local(self) -> List[ContentItem]:
+        items: List[ContentItem] = []
+
         if not self.export_dir.exists():
             print(f"⚠️  WhatsApp exports directory not found: {self.export_dir}")
             return items
-        
+
         # Find all .txt files
         export_files = list(self.export_dir.glob("*.txt"))
         print(f"💬 Found {len(export_files)} WhatsApp export files")
-        
+
         for file_path in export_files:
             try:
                 content = file_path.read_text(encoding="utf-8")
-                
+
                 # Extract conversation metadata
                 summary = self._summarize_conversation(content)
-                
-                # Use file modification time
-                timestamp = datetime.fromtimestamp(file_path.stat().st_mtime)
-                
-                # Title is the conversation name (filename)
+
+                # Use parsed timestamp or file modification time
+                timestamp = self._extract_timestamp_from_content(content)
                 title = f"WhatsApp: {file_path.stem}"
-                
+
+                if not self._is_recent(timestamp):
+                    continue
+
                 item = self._create_item(
                     title=title,
                     content=summary,
@@ -95,11 +144,28 @@ class WhatsAppCollector(BaseCollector):
                 )
                 items.append(item)
                 print(f"  ✓ Loaded: {title}")
-                
+
             except Exception as e:
                 print(f"  ✗ Error reading {file_path.name}: {e}")
-        
+
         return items
+
+    def _extract_timestamp_from_content(self, content: str) -> datetime:
+        for line in content.splitlines():
+            match = re.match(self.WHATSAPP_PATTERN, line)
+            if match:
+                hour, minute, day, month, year = match.groups()
+                try:
+                    return datetime(
+                        int(year), int(month), int(day), int(hour), int(minute)
+                    )
+                except Exception:
+                    break
+        return datetime.now()
+
+    def _is_recent(self, timestamp: datetime) -> bool:
+        delta = datetime.now() - timestamp
+        return delta.days <= config.WHATSAPP_LOOKBACK_DAYS
     
     def _summarize_conversation(self, content: str) -> str:
         """

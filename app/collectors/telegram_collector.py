@@ -1,59 +1,105 @@
 """
-Telegram Collector - fetches messages from Telegram channels (stub).
+Telegram Collector - fetches recent messages from Telegram channels.
 
-WHY THIS FILE EXISTS:
-- Placeholder for Telegram integration
-- Shows collector pattern for real-time APIs
-- Demonstrates async/authentication approach
-
-FUTURE IMPLEMENTATION:
-- Connect to Telegram Bot API
-- Read from channels you follow
-- Read from group chats (with permission)
-- Create ContentItem from messages
-
-REQUIREMENTS (when implemented):
-- python-telegram-bot
-
-HOW IT WOULD WORK:
-1. Set up Telegram bot with BOT_TOKEN
-2. Get chat IDs from channels/groups
-3. Fetch recent messages
-4. Extract content, author, timestamp
-5. Summarize long conversations
-
-AUTHENTICATION:
-- Get BOT_TOKEN from BotFather on Telegram
-- Store in .env (never hardcode!)
-- Request chat_id and message permissions
-
-PRIVACY:
-- Only read channels/groups you have access to
-- Respect user privacy
-- Don't share Telegram data without consent
+Requires Telethon user session (TELEGRAM_SESSION_STRING).
 """
 
+from datetime import datetime, timedelta
 from typing import List
 from app.collectors.base_collector import BaseCollector
 from app.models import ContentItem, SourceType
+from app.config import config
 
 
 class TelegramCollector(BaseCollector):
-    """Telegram message collector (stub)."""
-    
+    """Telegram message collector using Telethon user session."""
+
     def __init__(self):
-        """Initialize Telegram collector."""
         super().__init__(SourceType.TELEGRAM)
-    
+
     def collect(self) -> List[ContentItem]:
-        """
-        Collect messages from Telegram channels.
-        
-        FUTURE: Implement when you add python-telegram-bot
-        
-        Returns:
-            Empty list for now
-        """
-        print("ℹ️  Telegram collector not yet implemented")
-        print("   Future: Fetch messages from channels you follow")
-        return []
+        if not (config.TELEGRAM_API_ID and config.TELEGRAM_API_HASH):
+            print("ℹ️  Telegram API credentials not set")
+            return []
+        if not config.TELEGRAM_SESSION_STRING:
+            print("ℹ️  TELEGRAM_SESSION_STRING not set")
+            return []
+
+        channels = self._parse_channels(config.TELEGRAM_CHANNELS)
+        if not channels:
+            print("ℹ️  No Telegram channels configured")
+            return []
+
+        try:
+            from telethon import TelegramClient
+            from telethon.sessions import StringSession
+        except Exception as e:
+            print(f"ℹ️  Telethon not installed: {e}")
+            return []
+
+        since = datetime.now() - timedelta(days=config.TELEGRAM_LOOKBACK_DAYS)
+        items: List[ContentItem] = []
+
+        with TelegramClient(
+            StringSession(config.TELEGRAM_SESSION_STRING),
+            int(config.TELEGRAM_API_ID),
+            config.TELEGRAM_API_HASH,
+        ) as client:
+            for channel in channels:
+                try:
+                    messages = []
+                    async_iter = client.iter_messages(channel, offset_date=since, reverse=True)
+                    for msg in async_iter:
+                        if not getattr(msg, "message", None):
+                            continue
+                        messages.append((msg.date, msg.message))
+                        if len(messages) >= 30:
+                            break
+
+                    if not messages:
+                        continue
+
+                    summary_lines = [
+                        f"Channel: {channel}",
+                        f"Messages: {len(messages)} (last {config.TELEGRAM_LOOKBACK_DAYS} days)",
+                        "Recent snippets:",
+                    ]
+                    for ts, text in messages[:10]:
+                        snippet = text.replace("\n", " ").strip()
+                        if len(snippet) > 160:
+                            snippet = snippet[:160] + "..."
+                        summary_lines.append(f"- {ts.strftime('%Y-%m-%d %H:%M')}: {snippet}")
+
+                    item = self._create_item(
+                        title=f"Telegram: {channel}",
+                        content="\n".join(summary_lines),
+                        author="Telegram",
+                        timestamp=datetime.now(),
+                        raw_path=f"telegram:{channel}",
+                    )
+                    items.append(item)
+                    print(f"📨 Loaded Telegram: {channel}")
+                except Exception as e:
+                    print(f"⚠️  Telegram channel failed {channel}: {e}")
+
+        return items
+
+    @staticmethod
+    def _parse_channels(raw: str) -> List[str]:
+        if not raw:
+            return []
+        channels = []
+        for part in raw.split(","):
+            value = part.strip()
+            if not value:
+                continue
+            if "t.me/" in value:
+                value = value.split("t.me/")[-1]
+            value = value.split("?")[0]
+            value = value.strip("/")
+            if "/" in value:
+                value = value.split("/")[0]
+            if value.startswith("@"):
+                value = value[1:]
+            channels.append(value)
+        return list(dict.fromkeys(channels))

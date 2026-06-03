@@ -60,7 +60,7 @@ EXTENSION IDEAS:
 """
 
 import json
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from app.agents.base_agent import BaseAgent
 from app.models import AgentInput
 from app.services.openai_client import call_openai_json
@@ -165,7 +165,7 @@ Be objective but compassionate. Point to specific evidence."""
             )
             
             print("  ✓ Analysis complete")
-            return result
+            return self._normalize_output(result)
         
         except Exception as e:
             print(f"  ✗ Error in Reflection Agent: {e}")
@@ -174,3 +174,31 @@ Be objective but compassionate. Point to specific evidence."""
                 "error": str(e),
                 "uncertainties": ["Error occurred during analysis"],
             }
+
+    def _ensure_list(self, value: Union[List[Any], str, None]) -> List[Any]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
+
+    def _normalize_output(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(result, dict):
+            return {
+                "key_observations": [],
+                "thinking_biases_detected": [],
+                "alignment_with_goals": {"aligned": [], "misaligned": [], "unclear": []},
+                "patterns_noticed": [],
+                "blind_spots": [],
+                "hypothesis": "Unable to complete reflection",
+                "uncertainties": [],
+            }
+
+        result["key_observations"] = self._ensure_list(result.get("key_observations", []))
+        result["thinking_biases_detected"] = self._ensure_list(result.get("thinking_biases_detected", []))
+        result["patterns_noticed"] = self._ensure_list(result.get("patterns_noticed", []))
+        result["blind_spots"] = self._ensure_list(result.get("blind_spots", []))
+        result["uncertainties"] = self._ensure_list(result.get("uncertainties", []))
+        if not isinstance(result.get("alignment_with_goals"), dict):
+            result["alignment_with_goals"] = {"aligned": [], "misaligned": [], "unclear": []}
+        return result

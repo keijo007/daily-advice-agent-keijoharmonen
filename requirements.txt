@@ -29,6 +29,13 @@ apscheduler==3.10.4
 # HTTP Requests (for RSS fetching)
 requests==2.31.0
 
+# Telegram integration
+telethon==1.36.0
+
+# YouTube transcripts and downloads
+youtube-transcript-api==0.6.2
+yt-dlp==2024.05.27
+
 # Development & Testing
 pytest==7.4.3
 pytest-asyncio==0.21.1

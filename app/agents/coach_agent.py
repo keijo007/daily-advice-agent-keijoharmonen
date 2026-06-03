@@ -55,7 +55,7 @@ OUTPUT FORMAT:
 """
 
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List, Union
 from app.agents.base_agent import BaseAgent
 from app.models import AgentInput, DailyInsight
 from app.services.openai_client import call_openai_json
@@ -154,16 +154,40 @@ If suggesting financial/health advice, add appropriate disclaimers."""
             )
             
             print("  ✓ Coaching advice generated")
-            return result
+            return self._normalize_output(result)
         
         except Exception as e:
             print(f"  ✗ Error in Coach Agent: {e}")
             return {
                 "practical_tip": "Unable to generate advice due to error",
                 "error": str(e),
+                "warnings": [],
                 "confidence": 0.0,
             }
     
+    def _ensure_list(self, value: Union[List[str], str, None]) -> List[str]:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
+
+    def _normalize_output(self, result: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(result, dict):
+            return {
+                "practical_tip": "Unable to generate advice due to error",
+                "one_day_action": "",
+                "possible_project_idea": None,
+                "warnings": [],
+                "confidence": 0.0,
+            }
+
+        result["warnings"] = self._ensure_list(result.get("warnings", []))
+        result["practical_tip"] = result.get("practical_tip", "") or ""
+        result["one_day_action"] = result.get("one_day_action", "") or ""
+        result["possible_project_idea"] = result.get("possible_project_idea")
+        return result
+
     def create_daily_insight(
         self,
         reader_output: Dict[str, Any],
@@ -195,6 +219,6 @@ If suggesting financial/health advice, add appropriate disclaimers."""
             one_day_action=coach_output.get("one_day_action", ""),
             possible_project_idea=coach_output.get("possible_project_idea"),
             important_quotes=reader_output.get("important_quotes", []),
-            uncertainties=reflection_output.get("uncertainties", []) + coach_output.get("warnings", []),
+            uncertainties=self._ensure_list(reflection_output.get("uncertainties", [])) + self._ensure_list(coach_output.get("warnings", [])),
             sources_used=sources_used,
         )

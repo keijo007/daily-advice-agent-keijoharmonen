@@ -72,6 +72,7 @@ from app.collectors import (
     GoalsCollector,
     YouTubeCollector,
     TelegramCollector,
+    LinkedInExportCollector,
 )
 from app.services.normalize import normalize_items
 from app.services.deduplicate import deduplicate_items, get_hashes_from_items
@@ -96,6 +97,7 @@ class DailyPipeline:
             DiaryCollector(),
             GoalsCollector(),
             WhatsAppCollector(),
+            LinkedInExportCollector(),
             RSSCollector(),
             YouTubeCollector(),
             TelegramCollector(),

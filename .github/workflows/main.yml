@@ -46,6 +46,19 @@ jobs:
           ONEDRIVE_WEEKLY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Thoughts.md"
           ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY KNOWLEDGE/Knowledge Base/AI_Thoughts"
           ONEDRIVE_USER_ID: "keijohar@outlook.com"
+          ONEDRIVE_LINKEDIN_EXPORT_PATH: "/MY KNOWLEDGE/Knowledge Base/Exports/LinkedIn"
+          ONEDRIVE_WHATSAPP_EXPORT_PATH: "/MY KNOWLEDGE/Knowledge Base/Exports/WhatsApp"
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_SESSION_STRING: ${{ secrets.TELEGRAM_SESSION_STRING }}
+          TELEGRAM_LOOKBACK_DAYS: "30"
+          TELEGRAM_CHANNELS: "https://t.me/Oskar_Hartmann, https://t.me/MargulanSeissembai, https://t.me/INSTARDING, https://t.me/dobry, https://t.me/otaniemievents, https://t.me/aaltoes, https://t.me/aaltofounderschool, https://t.me/KonsensusRy/1, https://t.me/KonsensusRy/92550, https://t.me/KonsensusRy/92495"
+          YOUTUBE_CHANNEL_URLS: "https://www.youtube.com/@oskar_hartmann1, https://www.youtube.com/@Margulan.Seissembai, https://www.youtube.com/@NordnetSuomi"
+          YOUTUBE_LOOKBACK_DAYS: "14"
+          YOUTUBE_WHISPER_ENABLED: "false"
+          YOUTUBE_WHISPER_MAX_MINUTES: "120"
+          LINKEDIN_LOOKBACK_DAYS: "14"
+          WHATSAPP_LOOKBACK_DAYS: "14"
         run: |
           python scripts/generate_insight_safe.py
       
@@ -77,6 +90,19 @@ jobs:
           ONEDRIVE_WEEKLY_FILE_PATH: "/MY KNOWLEDGE/Knowledge Base/main/Thoughts.md"
           ONEDRIVE_DAILY_INSIGHTS_PATH: "/MY KNOWLEDGE/Knowledge Base/AI_Thoughts"
           ONEDRIVE_USER_ID: "keijohar@outlook.com"
+          ONEDRIVE_LINKEDIN_EXPORT_PATH: "/MY KNOWLEDGE/Knowledge Base/Exports/LinkedIn"
+          ONEDRIVE_WHATSAPP_EXPORT_PATH: "/MY KNOWLEDGE/Knowledge Base/Exports/WhatsApp"
+          TELEGRAM_API_ID: ${{ secrets.TELEGRAM_API_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+          TELEGRAM_SESSION_STRING: ${{ secrets.TELEGRAM_SESSION_STRING }}
+          TELEGRAM_LOOKBACK_DAYS: "30"
+          TELEGRAM_CHANNELS: "https://t.me/Oskar_Hartmann, https://t.me/MargulanSeissembai, https://t.me/INSTARDING, https://t.me/dobry, https://t.me/otaniemievents, https://t.me/aaltoes, https://t.me/aaltofounderschool, https://t.me/KonsensusRy/1, https://t.me/KonsensusRy/92550, https://t.me/KonsensusRy/92495"
+          YOUTUBE_CHANNEL_URLS: "https://www.youtube.com/@oskar_hartmann1, https://www.youtube.com/@Margulan.Seissembai, https://www.youtube.com/@NordnetSuomi"
+          YOUTUBE_LOOKBACK_DAYS: "14"
+          YOUTUBE_WHISPER_ENABLED: "false"
+          YOUTUBE_WHISPER_MAX_MINUTES: "120"
+          LINKEDIN_LOOKBACK_DAYS: "14"
+          WHATSAPP_LOOKBACK_DAYS: "14"
       
       - name: Display generated files
         run: |

@@ -20,7 +20,7 @@ HOW TO EXTEND:
 from dataclasses import dataclass, asdict
 from enum import Enum
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 import hashlib
 import json
 
@@ -33,6 +33,7 @@ class SourceType(str, Enum):
     GOALS = "goals"
     YOUTUBE = "youtube"
     TELEGRAM = "telegram"
+    LINKEDIN = "linkedin"
     # Extension points for future sources:
     # LINKEDIN = "linkedin"
     # PODCAST = "podcast"
@@ -99,7 +100,7 @@ class DailyInsight:
     main_insight: str  # High-level summary of the day's learnings
     source_summary: str  # What did Reader Agent learn?
     self_reflection: str  # What did Reflection Agent observe about you?
-    thinking_biases_detected: List[str]  # Specific cognitive biases noticed
+    thinking_biases_detected: List[Dict[str, Any]]  # Specific cognitive biases noticed (objects with name/evidence)
     practical_tip: str  # Concrete, actionable advice
     one_day_action: str  # Something you can do TODAY
     possible_project_idea: Optional[str]  # Optional innovation/project idea
