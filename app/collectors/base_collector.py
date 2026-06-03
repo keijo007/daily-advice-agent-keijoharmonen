@@ -36,6 +36,7 @@ class BaseCollector(ABC):
             source_type: Which SourceType enum this collector handles
         """
         self.source_type = source_type
+        self.name = self.__class__.__name__
     
     @abstractmethod
     def collect(self) -> List[ContentItem]:

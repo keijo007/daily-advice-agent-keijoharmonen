@@ -6,7 +6,7 @@ Prefers existing captions; optionally uses Whisper when enabled.
 
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Optional
 import feedparser
@@ -30,7 +30,7 @@ class YouTubeCollector(BaseCollector):
             print("ℹ️  No YouTube channels configured")
             return []
 
-        since = datetime.now() - timedelta(days=config.YOUTUBE_LOOKBACK_DAYS)
+        since = datetime.now(timezone.utc) - timedelta(days=config.YOUTUBE_LOOKBACK_DAYS)
         pending = self._load_pending()
         items: List[ContentItem] = []
 
@@ -57,7 +57,7 @@ class YouTubeCollector(BaseCollector):
                     pending[video_id] = {
                         "url": entry.get("link"),
                         "title": entry.get("title"),
-                        "added_at": datetime.now().isoformat(),
+                        "added_at": datetime.now(timezone.utc).isoformat(),
                     }
                     continue
 
@@ -73,10 +73,10 @@ class YouTubeCollector(BaseCollector):
 
     def _check_pending(self, pending: dict) -> List[ContentItem]:
         items: List[ContentItem] = []
-        max_age = datetime.now() - timedelta(days=config.YOUTUBE_LOOKBACK_DAYS)
+        max_age = datetime.now(timezone.utc) - timedelta(days=config.YOUTUBE_LOOKBACK_DAYS)
 
         for video_id, info in list(pending.items()):
-            added_at = self._parse_datetime(info.get("added_at")) or datetime.now()
+            added_at = self._parse_datetime(info.get("added_at")) or datetime.now(timezone.utc)
             if added_at < max_age:
                 pending.pop(video_id, None)
                 continue
@@ -184,7 +184,10 @@ class YouTubeCollector(BaseCollector):
         if not value:
             return None
         try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                return dt.replace(tzinfo=timezone.utc)
+            return dt
         except Exception:
             return None
 
