@@ -16,6 +16,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from app.config import config
+from app.services.onedrive_client import OneDriveClient
 from app.services.daily_pipeline import DailyPipeline
 
 
@@ -273,40 +275,23 @@ def main():
             print("✗ Failed to generate insight")
             sys.exit(1)
         
-        # Create output directory
-        output_dir = Path("data/daily_insights")
-        output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Generate filename
-        today = datetime.now().strftime("%Y-%m-%d")
-        
-        # Save as JSON
-        json_file = output_dir / f"{today}.json"
-        
         # Convert insight to dict if it's an object
         if hasattr(insight, '__dict__'):
             insight_dict = insight.__dict__
         else:
             insight_dict = insight if isinstance(insight, dict) else {}
-        
-        json_file.write_text(
-            json.dumps(insight_dict, indent=2, ensure_ascii=False),
-            encoding="utf-8"
-        )
-        print(f"✓ Saved JSON: {json_file}")
-        
-        # Generate and save HTML
+
         html_content = generate_html(insight_dict)
-        
-        # Save as today's HTML
-        html_file = output_dir / f"{today}.html"
-        html_file.write_text(html_content, encoding="utf-8")
-        print(f"✓ Saved HTML: {html_file}")
-        
+
         # Update index.html (latest)
         index_file = Path("index.html")
         index_file.write_text(html_content, encoding="utf-8")
         print(f"✓ Updated index.html")
+
+        if config.UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE:
+            _upload_insight_to_onedrive(insight_dict, today)
+        else:
+            print("ℹ️  OneDrive upload disabled by UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE")
         
         print("\n" + "="*60)
         print(f"✓ SUCCESS - Insight generated for {today}")
@@ -317,6 +302,39 @@ def main():
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def _upload_insight_to_onedrive(insight_dict: dict, today: str) -> None:
+    client = OneDriveClient()
+    if not client.enabled:
+        print("⚠️  OneDrive ei ole konfiguroitu, ei lähetetä")
+        return
+
+    payload = json.dumps(insight_dict, ensure_ascii=False, indent=2)
+
+    if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
+        filename = f"{today}.json"
+        print(f"📤 Lähetetään OneDrive-jakolinkkiin: {filename}")
+        uploaded = client.upload_to_shared_folder(
+            config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
+            filename,
+            payload,
+        )
+    elif config.ONEDRIVE_DAILY_INSIGHTS_PATH:
+        onedrive_path = f"{config.ONEDRIVE_DAILY_INSIGHTS_PATH.rstrip('/')}/{today}.json"
+        print(f"📤 Lähetetään OneDrive-polkuun: {onedrive_path}")
+        uploaded = client.write_file(
+            onedrive_path,
+            payload,
+        )
+    else:
+        print("⚠️  OneDrive-polku tai jakolinkki puuttuu, ei lähetetä")
+        return
+
+    if uploaded:
+        print(f"✓ Insight lähetetty OneDriveen: {today}.json")
+    else:
+        print("✗ OneDrive-lähetys epäonnistui")
 
 
 if __name__ == "__main__":

@@ -41,7 +41,6 @@ class Config:
     DIARY_DIR = DATA_DIR / "diary"
     WHATSAPP_DIR = DATA_DIR / "whatsapp_exports"
     GOALS_DIR = DATA_DIR / "goals"
-    DAILY_INSIGHTS_DIR = DATA_DIR / "daily_insights"
     DB_PATH = DATA_DIR / "insights.db"
 
     # ========== OPENAI CONFIGURATION ==========
@@ -55,6 +54,14 @@ class Config:
         "ONEDRIVE_DAILY_INSIGHTS_SHARE_URL",
         "",
     )
+    ONEDRIVE_DAILY_INSIGHTS_PATH = os.getenv(
+        "ONEDRIVE_DAILY_INSIGHTS_PATH",
+        "",
+    )
+    UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE = os.getenv(
+        "UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE",
+        "false",
+    ).lower() == "true"
     ONEDRIVE_DIARY_SHARE_URL = os.getenv(
         "ONEDRIVE_DIARY_SHARE_URL",
         "",
@@ -74,10 +81,6 @@ class Config:
     ONEDRIVE_DIARY_PATH = os.getenv(
         "ONEDRIVE_DIARY_PATH",
         "",
-    )
-    ONEDRIVE_DAILY_INSIGHTS_PATH = os.getenv(
-        "ONEDRIVE_DAILY_INSIGHTS_PATH",
-        "/MY LIFE/My Life Knowledge/AI_Thoughts",
     )
     ONEDRIVE_LINKEDIN_EXPORT_PATH = os.getenv(
         "ONEDRIVE_LINKEDIN_EXPORT_PATH",
@@ -106,6 +109,7 @@ class Config:
 
     LINKEDIN_LOOKBACK_DAYS = int(os.getenv("LINKEDIN_LOOKBACK_DAYS", 14))
     WHATSAPP_LOOKBACK_DAYS = int(os.getenv("WHATSAPP_LOOKBACK_DAYS", 14))
+    PREVIOUS_INSIGHTS_LIMIT = int(os.getenv("PREVIOUS_INSIGHTS_LIMIT", 15))
     
     # Max tokens for API calls (keep cost reasonable)
     MAX_TOKENS_READER = int(os.getenv("MAX_TOKENS_READER", 1000))
@@ -135,7 +139,6 @@ class Config:
             self.DIARY_DIR,
             self.WHATSAPP_DIR,
             self.GOALS_DIR,
-            self.DAILY_INSIGHTS_DIR,
         ]:
             directory.mkdir(parents=True, exist_ok=True)
 

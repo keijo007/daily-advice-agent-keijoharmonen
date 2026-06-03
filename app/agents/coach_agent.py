@@ -128,21 +128,23 @@ OUTPUT FORMAT: Return valid JSON with:
         
         print(f"🏆 Coach Agent: Synthesizing insights and generating advice...")
         
-        # We expect reader and reflection outputs in the input
-        # For now, we'll create a simple demonstration
+        previous_context = self._format_previous_insights_context(agent_input)
         
+        # We expect reader and reflection outputs in the input
         user_message = f"""Based on today's analysis, provide one piece of actionable coaching advice.
 
 CONTEXT:
 - Goals: {agent_input.goals or '(Not provided)'}
 - Recent diary patterns: {agent_input.recent_diary[:500] if agent_input.recent_diary else '(Not provided)'}
 - Today's key content: {self._format_items_for_context(agent_input.new_items, max_chars=800) if agent_input.new_items else '(No new items)'}
-
+{previous_context if previous_context else ''}
 Generate ONE practical tip that is:
 1. Specific and actionable (not vague)
 2. Doable in one day
 3. Based on today's learnings or observed patterns
 4. Aligned with stated goals (or flag conflicts)
+
+Avoid repeating the same high-level takeaway or action from prior insights. If today's work is a continuation, frame it as progression rather than repetition.
 
 If suggesting financial/health advice, add appropriate disclaimers."""
         
@@ -187,6 +189,22 @@ If suggesting financial/health advice, add appropriate disclaimers."""
         result["one_day_action"] = result.get("one_day_action", "") or ""
         result["possible_project_idea"] = result.get("possible_project_idea")
         return result
+
+    def _format_previous_insights_context(self, agent_input: AgentInput) -> str:
+        """Format prior insights into a short context block."""
+        lines = []
+        if agent_input.previous_insights:
+            lines.append("PREVIOUS DAILY INSIGHTS:")
+            for insight in agent_input.previous_insights[: config.PREVIOUS_INSIGHTS_LIMIT]:
+                lines.append(f"- {insight.date}: {insight.main_insight} (Action: {insight.one_day_action})")
+
+        if agent_input.previous_insight_summaries:
+            lines.append("PREVIOUS INSIGHT SUMMARIES FROM ONE DRIVE:")
+            for summary in agent_input.previous_insight_summaries[: config.PREVIOUS_INSIGHTS_LIMIT]:
+                first_line = summary.splitlines()[0]
+                lines.append(f"- {first_line}")
+
+        return "\n".join(lines) + "\n\n" if lines else ""
 
     def create_daily_insight(
         self,

@@ -19,10 +19,10 @@ from app.services.storage import StorageService
 
 
 class TestNormalization:
-    \"\"\"Test data normalization.\"\"\"
+    """Test data normalization."""
     
     def test_normalize_dict_to_contentitem(self):
-        \"\"\"Test converting dict to ContentItem.\"\"\"
+        """Test converting dict to ContentItem."""
         
         data = {
             "source": "diary",
@@ -40,7 +40,7 @@ class TestNormalization:
         print("✓ Dictionary normalization works!")
     
     def test_normalize_contentitem_passthrough(self):
-        \"\"\"Test that ContentItem passes through unchanged.\"\"\"
+        """Test that ContentItem passes through unchanged."""
         
         original = ContentItem(
             source=SourceType.RSS,
@@ -56,7 +56,7 @@ class TestNormalization:
         print("✓ ContentItem passthrough works!")
     
     def test_validate_good_item(self):
-        \"\"\"Test that valid item passes validation.\"\"\"
+        """Test that valid item passes validation."""
         
         item = ContentItem(
             source=SourceType.DIARY,
@@ -70,7 +70,7 @@ class TestNormalization:
         print("✓ Valid item passes validation!")
     
     def test_validate_empty_title(self):
-        \"\"\"Test that empty title fails validation.\"\"\"
+        """Test that empty title fails validation."""
         
         item = ContentItem(
             source=SourceType.DIARY,
@@ -85,10 +85,10 @@ class TestNormalization:
 
 
 class TestDeduplication:
-    \"\"\"Test deduplication logic.\"\"\"
+    """Test deduplication logic."""
     
     def test_duplicate_detection(self):
-        \"\"\"Test that duplicates are detected by hash.\"\"\"
+        """Test that duplicates are detected by hash."""
         
         # Create two identical items
         item1 = ContentItem(
@@ -115,7 +115,7 @@ class TestDeduplication:
         print(f"✓ Duplicates produce same hash: {hash1}")
     
     def test_filter_duplicates(self):
-        \"\"\"Test that deduplicate_items filters correctly.\"\"\"
+        """Test that deduplicate_items filters correctly."""
         
         # Create items
         new_item = ContentItem(
@@ -148,10 +148,10 @@ class TestDeduplication:
 
 
 class TestStorage:
-    \"\"\"Test SQLite storage.\"\"\"
+    """Test SQLite storage."""
     
     def test_save_and_retrieve_item(self):
-        \"\"\"Test saving and retrieving items from database.\"\"\"
+        """Test saving and retrieving items from database."""
         
         with TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"
@@ -176,9 +176,9 @@ class TestStorage:
             assert item_hash in hashes
             
             print("✓ Storage save/retrieve works!")
-    
+
     def test_duplicate_prevention(self):
-        \"\"\"Test that saving duplicate is rejected.\"\"\"
+        """Test that saving duplicate is rejected."""
         
         with TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"

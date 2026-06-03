@@ -16,7 +16,6 @@ Generates personalized daily summaries based on your goals, diary, and interests
 scripts/
   generate_insight.py       ← Pääskripti
 data/
-  daily_insights/           ← Tallennetaan automaattisesti
 index.html                  ← GitHub Pages näyttää tätä
 ```
 
@@ -34,7 +33,7 @@ scripts/generate_insight.py
         ↓
 Reader + Reflection + Coach Agents (OpenAI)
         ↓
- HTML + JSON
+ HTML page update
         ↓
 git commit & push
         ↓
@@ -109,19 +108,23 @@ Settings → Pages → Custom domain → daily-insights.com
 
 ---
 
-## 💾 Data-tallennus
+## 💾 Tallennus ja julkaisu
 
-### Git-repoon (oletuksena)
+Tämä projekti tuottaa HTML-sivun `index.html`, joka on GitHub Pages -julkaisun lähde.
 
-- ✅ Versionhallinta
-- ✅ Ilmainen backup
-- ❌ Repon kokoon rajoitus (~100 MB)
+### GitHub Pages
 
-Jokainen päivä: `data/daily_insights/YYYY-MM-DD.json`
+- `index.html` päivitetään automaattisesti
+- Näkyy GitHub Pages -sivuna
 
 ### OneDriveen (valinnainen)
 
-Aktivoi skriptissa tai GitHub Actionsissa.
+Jos OneDrive on konfiguroitu, insight voidaan ladata myös suoraan pilveen.
+
+- `ONEDRIVE_DAILY_INSIGHTS_PATH` tai `ONEDRIVE_DAILY_INSIGHTS_SHARE_URL`
+- `UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE=true`
+
+> Paikallista `data/daily_insights`-kansiota ei enää käytetä insightien tallennukseen.
 
 ---
 

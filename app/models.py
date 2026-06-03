@@ -125,3 +125,4 @@ class AgentInput:
     goals: Optional[str]  # Goals file content
     recent_diary: Optional[str]  # Recent diary entries
     previous_insights: Optional[List[DailyInsight]]  # For context
+    previous_insight_summaries: Optional[List[str]] = None  # Remote or historical summaries

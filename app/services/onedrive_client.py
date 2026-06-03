@@ -1,6 +1,7 @@
 """OneDrive integration for cloud deployment."""
 
 import os
+import json
 from typing import List, Optional
 import logging
 import base64
@@ -366,6 +367,128 @@ class OneDriveClient:
         except Exception as e:
             logger.error(f"✗ Error listing OneDrive files: {e}")
             return None
+
+    def _list_shared_folder(self, share_url: str) -> Optional[List[dict]]:
+        """List children of a shared OneDrive folder."""
+        if not self.enabled:
+            return None
+
+        item = self._get_shared_item(share_url)
+        if not item:
+            return None
+
+        try:
+            import requests
+
+            drive_id = item.get("parentReference", {}).get("driveId")
+            folder_id = item.get("id")
+            if not drive_id or not folder_id:
+                logger.error("✗ Missing driveId or folderId for shared folder")
+                return None
+
+            access_token = self._get_access_token()
+            if not access_token:
+                return None
+
+            url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{folder_id}/children"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(url, headers=headers)
+
+            if response.status_code == 200:
+                return response.json().get("value", [])
+
+            logger.error(f"✗ Failed to list shared folder contents: {response.status_code}")
+            logger.debug(f"Response: {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"✗ Error listing shared folder: {e}")
+            return None
+
+    def _read_drive_item_content(self, drive_id: str, item_id: str) -> Optional[str]:
+        """Read a OneDrive item by drive id and item id."""
+        if not self.enabled:
+            return None
+
+        try:
+            import requests
+
+            access_token = self._get_access_token()
+            if not access_token:
+                return None
+
+            content_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{item_id}/content"
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(content_url, headers=headers)
+            if response.status_code == 200:
+                return response.text
+
+            logger.error(f"✗ Failed to read drive item content: {response.status_code}")
+            logger.debug(f"Response: {response.text}")
+            return None
+        except Exception as e:
+            logger.error(f"✗ Error reading drive item content: {e}")
+            return None
+
+    def read_previous_insight_summaries(
+        self,
+        folder_path: str = "/DailyInsights",
+        share_url: str = "",
+        limit: int = 15,
+    ) -> List[str]:
+        """
+        Read recent insight summaries from OneDrive.
+
+        Supports both direct folder paths and shared folder URLs.
+        Returns raw summary text for the most recent files.
+        """
+        if not self.enabled:
+            return []
+
+        files = []
+        if share_url:
+            items = self._list_shared_folder(share_url)
+            if items:
+                files = [item for item in items if item.get("file")]
+        else:
+            names = self.list_files(folder_path)
+            if names:
+                files = [{"name": name} for name in names]
+
+        if not files:
+            return []
+
+        # Sort by filename descending so recent entries are first.
+        files.sort(key=lambda item: item.get("name", ""), reverse=True)
+
+        summaries = []
+        for item in files[:limit]:
+            filename = item.get("name")
+            if not filename:
+                continue
+
+            if share_url:
+                drive_id = item.get("parentReference", {}).get("driveId")
+                item_id = item.get("id")
+                content = self._read_drive_item_content(drive_id, item_id) if drive_id and item_id else None
+            else:
+                content = self.read_file(f"{folder_path}/{filename}")
+
+            if not content:
+                continue
+
+            if filename.lower().endswith(".json"):
+                try:
+                    parsed = json.loads(content)
+                    summary = parsed.get("main_insight") or parsed.get("summary") or parsed.get("source_summary")
+                    if summary:
+                        summaries.append(f"{filename}: {summary}")
+                        continue
+                except Exception:
+                    pass
+
+            summaries.append(f"{filename}:\n{content.strip()}")
+
+        return summaries
     
     def read_diary_files(self, folder_path: str = "/Diary", limit: int = 7) -> List[str]:
         """

@@ -17,12 +17,15 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+# Aseta parent-kansio PATH:iin
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from app.config import config
+from app.services.onedrive_client import OneDriveClient
+
 # ============================================================================
 # SETUP
 # ============================================================================
-
-# Aseta parent-kansio PATH:iin
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Logging
 logging.basicConfig(
@@ -70,7 +73,6 @@ def create_data_directories():
         Path("data/diary"),
         Path("data/goals"),
         Path("data/whatsapp_exports"),
-        Path("data/daily_insights"),
     ]
     
     for dir_path in dirs:
@@ -197,19 +199,15 @@ def generate_insight():
         index_file.write_text(html)
         logger.info(f"  ✓ Tallennettu {index_file}")
         
-        # Tallenna JSON
-        json_file = Path("data/daily_insights") / f"{today}.json"
-        
         if hasattr(insight, '__dict__'):
             insight_dict = insight.__dict__
         else:
             insight_dict = insight if isinstance(insight, dict) else {}
-        
-        json_file.write_text(
-            json.dumps(insight_dict, indent=2, ensure_ascii=False),
-            encoding="utf-8"
-        )
-        logger.info(f"  ✓ Tallennettu {json_file}")
+
+        if config.UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE:
+            _upload_insight_to_onedrive(insight_dict, today)
+        else:
+            logger.info("ℹ️  OneDrive upload disabled by UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE")
         
         logger.info("\n" + "="*60)
         logger.info("✅ SUCCESS - Insight generated successfully")
@@ -220,6 +218,37 @@ def generate_insight():
     except Exception as e:
         logger.error(f"\n❌ ERROR during generation: {e}", exc_info=True)
         return False
+
+
+def _upload_insight_to_onedrive(insight_dict: dict, today: str) -> None:
+    client = OneDriveClient()
+    if not client.enabled:
+        logger.warning("⚠️  OneDrive ei ole konfiguroitu, ei lähetetä")
+        return
+
+    if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
+        filename = f"{today}.json"
+        logger.info(f"📤 Lähetetään OneDrive-jakolinkkiin: {filename}")
+        uploaded = client.upload_to_shared_folder(
+            config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
+            filename,
+            json.dumps(insight_dict, ensure_ascii=False, indent=2),
+        )
+    elif config.ONEDRIVE_DAILY_INSIGHTS_PATH:
+        onedrive_path = f"{config.ONEDRIVE_DAILY_INSIGHTS_PATH.rstrip('/')}/{today}.json"
+        logger.info(f"📤 Lähetetään OneDrive-polkuun: {onedrive_path}")
+        uploaded = client.write_file(
+            onedrive_path,
+            json.dumps(insight_dict, ensure_ascii=False, indent=2),
+        )
+    else:
+        logger.warning("⚠️  OneDrive-polku tai jakolinkki puuttuu, ei lähetetä")
+        return
+
+    if uploaded:
+        logger.info(f"✓ Insight lähetetty OneDriveen: {today}.json")
+    else:
+        logger.error("✗ OneDrive-lähetys epäonnistui")
 
 
 def generate_html(insight_data):

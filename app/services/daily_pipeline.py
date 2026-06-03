@@ -77,6 +77,7 @@ from app.collectors import (
 from app.services.normalize import normalize_items
 from app.services.deduplicate import deduplicate_items, get_hashes_from_items
 from app.services.storage import StorageService
+from app.services.onedrive_client import OneDriveClient
 from app.agents.reader_agent import ReaderAgent
 from app.agents.reflection_agent import ReflectionAgent
 from app.agents.coach_agent import CoachAgent
@@ -151,7 +152,8 @@ class DailyPipeline:
             print("-" * 40)
             goals = self._load_goals()
             recent_diary = self._load_recent_diary()
-            print(f"✓ Loaded goals and recent diary\n")
+            previous_insights, previous_insight_summaries = self._load_previous_insights()
+            print(f"✓ Loaded goals, recent diary, and prior insights\n")
             
             # STEP 6-8: Run agents
             print("STEP 6: RUNNING ANALYSIS AGENTS")
@@ -162,7 +164,8 @@ class DailyPipeline:
                 new_items=new_items,
                 goals=goals,
                 recent_diary=recent_diary,
-                previous_insights=None,
+                previous_insights=previous_insights,
+                previous_insight_summaries=previous_insight_summaries,
             )
             
             # Reader Agent: summarize new content
@@ -297,6 +300,42 @@ class DailyPipeline:
         except Exception as e:
             print(f"⚠️  Could not load diary: {e}")
             return None
+
+    def _load_previous_insights(self):
+        """Load past insights from storage and optionally from OneDrive."""
+        previous_insights = []
+        previous_insight_summaries = []
+
+        try:
+            previous_insights = self.storage.get_all_insights(limit=config.PREVIOUS_INSIGHTS_LIMIT)
+            if previous_insights:
+                print(f"✓ Loaded {len(previous_insights)} previous insights from local storage")
+            else:
+                print("ℹ️  No prior local insights found")
+        except Exception as e:
+            print(f"⚠️  Could not load prior insights from local storage: {e}")
+            previous_insights = []
+
+        if config.ONEDRIVE_DAILY_INSIGHTS_PATH or config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
+            client = OneDriveClient()
+            if client.enabled:
+                try:
+                    summaries = client.read_previous_insight_summaries(
+                        folder_path=config.ONEDRIVE_DAILY_INSIGHTS_PATH,
+                        share_url=config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
+                        limit=config.PREVIOUS_INSIGHTS_LIMIT,
+                    )
+                    if summaries:
+                        previous_insight_summaries.extend(summaries)
+                        print(f"✓ Loaded {len(summaries)} previous insight summaries from OneDrive")
+                    else:
+                        print("ℹ️  No prior insight summaries found in OneDrive")
+                except Exception as e:
+                    print(f"⚠️  Error loading insight summaries from OneDrive: {e}")
+            else:
+                print("ℹ️  OneDrive client not configured or enabled")
+
+        return previous_insights, previous_insight_summaries
 
 
 # Convenience function for manual execution

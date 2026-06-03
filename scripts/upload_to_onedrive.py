@@ -67,7 +67,7 @@ def build_markdown_summary(data: dict) -> str:
 
 
 def upload_to_onedrive():
-    """Upload today's insight files to OneDrive."""
+    """Upload today's insight to OneDrive."""
     
     print("\n📤 UPLOADING TO ONEDRIVE")
     print("-" * 40)
@@ -80,18 +80,28 @@ def upload_to_onedrive():
             print("   Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID")
             return
         
-        # Get today's insight
         today = datetime.now().strftime("%Y-%m-%d")
         json_file = Path(f"data/daily_insights/{today}.json")
         
-        if not json_file.exists():
-            print(f"⚠️  File not found: {json_file}")
-            return
-        
-        # Read the JSON file
-        print(f"📂 Reading: {json_file}")
-        with open(json_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        if json_file.exists():
+            print(f"📂 Reading: {json_file}")
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        else:
+            print(f"⚠️  Local JSON not found: {json_file}")
+            print("ℹ️  Generating insight directly from pipeline instead")
+            from app.services.daily_pipeline import DailyPipeline
+
+            pipeline = DailyPipeline()
+            insight = pipeline.run()
+            if not insight:
+                print("✗ Pipeline failed, cannot upload insight")
+                return
+
+            if hasattr(insight, '__dict__'):
+                data = insight.__dict__
+            else:
+                data = insight if isinstance(insight, dict) else {}
 
         summary_text = build_markdown_summary(data)
 

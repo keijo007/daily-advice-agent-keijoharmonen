@@ -138,10 +138,12 @@ Return valid JSON with these fields:
         
         print(f"🔍 Reflection Agent: Analyzing your thinking patterns...")
         
+        previous_context = self._format_previous_insights_context(agent_input)
+        
         # Build context
         user_message = f"""Please analyze this person's thinking and patterns:
 
-GOALS:
+{previous_context if previous_context else ''}GOALS:
 {agent_input.goals or '(No goals provided)'}
 
 RECENT DIARY ENTRIES (last 7 days):
@@ -154,6 +156,8 @@ Analysis needed:
 4. What blind spots might they have?
 5. What's your hypothesis about what's really going on?
 6. What are you uncertain about?
+
+If these thoughts resemble previous insights, note whether this is a continuation or a new shift. Do not simply repeat earlier conclusions.
 
 Be objective but compassionate. Point to specific evidence."""
         
@@ -202,3 +206,18 @@ Be objective but compassionate. Point to specific evidence."""
         if not isinstance(result.get("alignment_with_goals"), dict):
             result["alignment_with_goals"] = {"aligned": [], "misaligned": [], "unclear": []}
         return result
+
+    def _format_previous_insights_context(self, agent_input: AgentInput) -> str:
+        """Format prior insights for prompt context."""
+        lines = []
+        if agent_input.previous_insights:
+            lines.append("PREVIOUS DAILY INSIGHTS:")
+            for insight in agent_input.previous_insights[: config.PREVIOUS_INSIGHTS_LIMIT]:
+                lines.append(f"- {insight.date}: {insight.main_insight} (Action: {insight.one_day_action})")
+
+        if agent_input.previous_insight_summaries:
+            lines.append("PREVIOUS INSIGHT SUMMARIES FROM ONE DRIVE:")
+            for summary in agent_input.previous_insight_summaries[: config.PREVIOUS_INSIGHTS_LIMIT]:
+                lines.append(f"- {summary.splitlines()[0]}")
+
+        return "\n".join(lines) + "\n\n" if lines else ""
