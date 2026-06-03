@@ -2,262 +2,177 @@
 
 🤖 **Automated daily insights using AI agents + GitHub Actions + GitHub Pages**
 
-Generates personalized daily summaries based on your goals, diary, and interests. Deployed completely free using GitHub's free tier.
+Generates a daily summary page from your goals, diary entries, and other configured sources.
 
-**Budjetti**: €5-10/vuosi (vain domain)
+This repo is built for GitHub Pages publishing and optional OneDrive upload.
 
 ---
 
-## 📁 Tiedostorakenne
+## 📁 Current project structure
 
 ```
 .github/workflows/
-  daily-insight.yml         ← Automaattinen päivittäinen ajo
+  daily-insight.yml         ← Scheduled pipeline run
 scripts/
-  generate_insight.py       ← Pääskripti
-data/
-index.html                  ← GitHub Pages näyttää tätä
+  generate_insight.py       ← Main generator
+  generate_insight_safe.py  ← Safer local workflow helper
+  upload_to_onedrive.py     ← Optional direct upload tool
+app/                        ← Core pipeline, agents, collectors
+data/                       ← Local source files (diary, goals, exports)
+index.html                  ← Published GitHub Pages page
 ```
 
 ---
 
-## ⚙️ Miten toimii
+## ⚙️ How it works
 
-Päivittäin 06:00 UTC
-        ↓
- GitHub Actions
-        ↓
-scripts/generate_insight.py
-        ↓
- DailyPipeline
-        ↓
-Reader + Reflection + Coach Agents (OpenAI)
-        ↓
- HTML page update
-        ↓
-git commit & push
-        ↓
-GitHub Pages update
-        ↓
-https://daily-insights.com ✓
-```
+Daily run flow:
+
+1. GitHub Actions triggers `scripts/generate_insight.py`
+2. `DailyPipeline` collects diary/goals/feeds
+3. Reader, Reflection, and Coach agents analyze the data
+4. `index.html` is generated
+5. The repository is updated and GitHub Pages publishes the page
+
+> Local `data/daily_insights` storage is no longer used for daily output.
 
 ---
 
-## 🔧 Konfigurointi
+## 🔧 Configuration
 
-### Muuta ajastusta
+### OneDrive upload (optional)
 
-`.github/workflows/daily-insight.yml`:
+This repo can optionally write daily insight output to OneDrive.
 
-```yaml
-schedule:
-  - cron: '0 6 * * *'  # ← Muuta tätä
-```
+Required environment variables:
 
-Cron-muoto: `minute hour day month day-of-week`
-- `0 6 * * *` = 06:00 UTC joka päivä
-- `0 9 * * 1-5` = 09:00 UTC maanantaista perjantaihin
-- Helppo: https://crontab.guru
+- `OPENAI_API_KEY`
+- `UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE=true`
 
----
+OneDrive upload targets:
 
-## 📚 Asennus
+- `ONEDRIVE_DAILY_INSIGHTS_PATH`
+- `ONEDRIVE_DAILY_INSIGHTS_SHARE_URL`
 
-### 1. GitHub Secrets
+If explained by your setup, provide Azure credentials too:
 
-`https://github.com/yourusername/daily-insights/settings/secrets/actions`
-
-**Pakollinen:**
-- `OPENAI_API_KEY` = `sk-proj-...`
-
-**Valinnainen (OneDrive):**
 - `AZURE_CLIENT_ID`
 - `AZURE_CLIENT_SECRET`
 - `AZURE_TENANT_ID`
 
-### 2. Testaa
+---
 
+## 📚 Setup
+
+### 1. Configure GitHub Secrets
+
+Go to your repository settings and add:
+
+- `OPENAI_API_KEY`
+- Optional OneDrive secrets if you want cloud upload
+
+### 2. Run locally
+
+```bash
+python scripts/generate_insight.py
 ```
-Repository → Actions → Daily Insight Generator → Run workflow
+
+or for a safer helper:
+
+```bash
+python scripts/generate_insight_safe.py
 ```
 
 ### 3. GitHub Pages
 
-```
-Settings → Pages
-- Branch: main
-- Folder: /
-```
+Configure Pages:
 
-URL: `https://yourusername.github.io/daily-insights/`
+- Branch: `main`
+- Folder: `/`
 
-### 4. Domain (valinnainen)
+Published URL:
 
-Hanki domain: GoDaddy/Namecheap (~€5-10/vuosi)
-
-Konfiguroi DNS:
-```
-CNAME: daily-insights.com → yourusername.github.io
-```
-
-GitHub:
-```
-Settings → Pages → Custom domain → daily-insights.com
-```
-
----
-
-## 💾 Tallennus ja julkaisu
-
-Tämä projekti tuottaa HTML-sivun `index.html`, joka on GitHub Pages -julkaisun lähde.
-
-### GitHub Pages
-
-- `index.html` päivitetään automaattisesti
-- Näkyy GitHub Pages -sivuna
-
-### OneDriveen (valinnainen)
-
-Jos OneDrive on konfiguroitu, insight voidaan ladata myös suoraan pilveen.
-
-- `ONEDRIVE_DAILY_INSIGHTS_PATH` tai `ONEDRIVE_DAILY_INSIGHTS_SHARE_URL`
-- `UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE=true`
-
-> Paikallista `data/daily_insights`-kansiota ei enää käytetä insightien tallennukseen.
-
----
-
-## 🐛 Vikadiagnosa
-
-### Workflow epäonnistuu?
-
-1. Katso lokit:
-   ```
-   Repository → Actions → Daily Insight Generator → [viimeisin run] → Logs
-   ```
-
-2. Tarkista Secrets:
-   ```
-   Settings → Secrets and variables → Actions
-   - OPENAI_API_KEY asetettu?
-   - Oikealla arvolla (ei välilyöntejä)?
-   ```
-
-3. Testaa paikallisesti:
-   ```bash
-   python scripts/generate_insight.py
-   ```
-
-### "OpenAI API key not found"?
-
-- Settings → Secrets → OPENAI_API_KEY
-- Tarkista että nimi on TASAN: `OPENAI_API_KEY`
-- Ei välilyöntejä alussa/lopussa
-
-### GitHub Pages ei näy?
-
-```
-Settings → Pages
-- Branch: main
-- Folder: /
-- Odota 1-2 minuuttia
-```
-
----
-
-## 💰 Kustannukset
-
-| Komponentti | Hinta |
-|-------------|-------|
-| GitHub Actions | €0 (2000 min/kk) |
-| GitHub Pages | €0 |
-| OpenAI API | €0.47/vuosi |
-| Domain (valinnainen) | €5-10/vuosi |
-| **YHTEENSÄ** | **€5-10/vuosi** |
-
----
-
-## 📖 Dokumentaatio
-
-- [`.github/README.md`](.github/README.md) - GitHub Actions ohjeet
-- [`BUDGET_DEPLOYMENT.md`](BUDGET_DEPLOYMENT.md) - Yksityiskohtainen opas
-- **[`GITHUB_ACTIONS_SAFE_SETUP.md`](GITHUB_ACTIONS_SAFE_SETUP.md) - TURVALLINEN SETUP!**
-- **[`GITHUB_ACTIONS_SUMMARY.md`](GITHUB_ACTIONS_SUMMARY.md) - Yhteenveto**
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) - Tekninen rakenne (AI & kehittäjille)
-
----
-
-## ✅ Tarkistuslista
-
-- [ ] OpenAI API-avain hankittu
-- [ ] GitHub Secrets asetettu
-- [ ] Workflow testattu (Run workflow)
-- [ ] Tulokset näkyvät (Actions → Logs)
-- [ ] GitHub Pages konfiguroitu
-- [ ] Domain ostettu (valinnainen)
-
----
-
-## 🎉 Valmis!
-
-Sovellus pyörii nyt **24/7** ilman paikallista konetta.
-
-Päivittäinen yhteenveto näkyy:
 - `https://yourusername.github.io/daily-insights/`
-- Tai omalla domainillasi: `https://daily-insights.com`
-
-Generointi tapahtuu **automaattisesti klo 06:00 UTC** jika päivä.
 
 ---
 
-## 🤖 AI-analyysia varten
+## 💾 Storage and publishing
 
-Haluat AI:n analysoivan tai kehittävän järjestelmää?
+This project generates `index.html` as the main published output.
 
-**Kopioi nämä tiedostot AI:lle:**
-
-1. **README.md** (tämä) - Käytönotto
-2. **ARCHITECTURE.md** - Tekninen rakenne
-3. **AGENTS.md** - Agentit-järjestelmä
-4. Kaikki tiedostot `app/`-kansiosta
-
-**Komennolla:**
-```bash
-cat README.md ARCHITECTURE.md AGENTS.md > ai_context.txt
-# Kopioi sisältö AI:lle
-```
-
-AI ymmärtää nyt:
-- ✅ Kolmen agentin filosofia
-- ✅ Data flow (keruu → analyysi)
-- ✅ Komponentin arkkitehtuuri
-- ✅ Laajentamispisteet
-- ✅ Koodi-organisaatio
-
-AI voi kehittää:
-- ✅ Uusia agentteja
-- ✅ Uusia keräilijöitä
-- ✅ Parannuksia promteihin
-- ✅ Uusia ominaisuuksia
-✅ **Privacy by Design** - Limited data sent to external APIs
-✅ **Error Resilience** - If one source fails, others continue
-✅ **Lazy Evaluation** - Generate insight only when needed
-✅ **Agent Orchestration** - Agents work in sequence with clear inputs/outputs
+- `index.html` is the GitHub Pages artifact
+- OneDrive upload is optional and controlled by env vars
+- No local daily insight JSON file is required for normal operation
 
 ---
 
-## Resources
+## 🐛 Troubleshooting
 
-- OpenAI API: https://platform.openai.com/docs
-- FastAPI: https://fastapi.tiangolo.com
-- SQLite: https://www.sqlite.org/docs.html
-- Agent Design: https://en.wikipedia.org/wiki/Intelligent_agent
-- Python async: https://realpython.com/async-io-python/
+### Workflow fails
+
+1. Open Actions logs
+2. Confirm `OPENAI_API_KEY` is set correctly
+3. Run locally with `python scripts/generate_insight.py`
+
+### OpenAI key issue
+
+- Secret name must be exactly `OPENAI_API_KEY`
+- No leading or trailing spaces
+
+### GitHub Pages not updating
+
+- Check Pages settings
+- Wait 1-2 minutes after push
 
 ---
 
-## Questions?
+## 💰 Cost estimate
+
+| Component | Cost |
+|-----------|------|
+| GitHub Actions | Free within runner limits |
+| GitHub Pages | Free |
+| OpenAI API | Small monthly cost depending on usage |
+| Domain | Optional (€5-10/year) |
+
+---
+
+## 📖 Documentation
+
+- [`.github/README.md`](.github/README.md) - GitHub Actions guide
+- [`BUDGET_DEPLOYMENT.md`](BUDGET_DEPLOYMENT.md) - Deployment notes
+- [`GITHUB_ACTIONS_SAFE_SETUP.md`](GITHUB_ACTIONS_SAFE_SETUP.md) - Safe setup guide
+- [`GITHUB_ACTIONS_SUMMARY.md`](GITHUB_ACTIONS_SUMMARY.md) - Workflow summary
+- [`ARCHITECTURE.md`](ARCHITECTURE.md) - System architecture
+
+---
+
+## ✅ Checklist
+
+- [ ] `OPENAI_API_KEY` set
+- [ ] Workflow tested
+- [ ] GitHub Pages configured
+- [ ] OneDrive upload configured if desired
+
+---
+
+## 🎉 Ready
+
+The system publishes a daily AI-generated insight page automatically.
+
+---
+
+## Notes for developers
+
+This repo is built around:
+
+- `app/services/daily_pipeline.py`
+- `app/agents/reader_agent.py`
+- `app/agents/reflection_agent.py`
+- `app/agents/coach_agent.py`
+
+Use the `scripts/upload_to_onedrive.py` tool only if you want a direct OneDrive backup.
+
 
 This README explains:
 - ✅ What data goes in and where
