@@ -328,6 +328,46 @@ class OneDriveClient:
             logger.error(f"✗ Error reading from OneDrive: {e}")
             return None
     
+    def read_mail_messages(
+        self,
+        folder: str = "Inbox",
+        limit: int = 10,
+        since: Optional[str] = None,
+    ) -> List[dict]:
+        """
+        Read recent Outlook email messages from Microsoft Graph.
+        """
+        if not self.enabled:
+            return []
+
+        access_token = self._get_access_token()
+        if not access_token:
+            return []
+
+        try:
+            import requests
+
+            url = "https://graph.microsoft.com/v1.0/me/mailFolders/{folder}/messages".format(folder=folder)
+            params = {
+                "$top": limit,
+                "$select": "subject,bodyPreview,from,receivedDateTime",
+                "$orderby": "receivedDateTime desc",
+            }
+            if since:
+                params["$filter"] = f"receivedDateTime ge {since}"
+
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = requests.get(url, headers=headers, params=params, timeout=20)
+            if response.status_code != 200:
+                logger.error(f"✗ Failed to read Outlook messages: {response.status_code}")
+                logger.debug(f"Response: {response.text}")
+                return []
+
+            return response.json().get("value", [])
+        except Exception as e:
+            logger.error(f"✗ Error reading Outlook mail: {e}")
+            return []
+
     def list_files(self, folder_path: str = "/Documents") -> Optional[List[str]]:
         """
         List files in OneDrive folder.

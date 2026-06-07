@@ -73,6 +73,8 @@ from app.collectors import (
     YouTubeCollector,
     TelegramCollector,
     LinkedInExportCollector,
+    GmailCollector,
+    OutlookCollector,
 )
 from app.services.normalize import normalize_items
 from app.services.deduplicate import deduplicate_items, get_hashes_from_items
@@ -102,6 +104,8 @@ class DailyPipeline:
             RSSCollector(),
             YouTubeCollector(),
             TelegramCollector(),
+            GmailCollector(),
+            OutlookCollector(),
         ]
         
         # Initialize agents

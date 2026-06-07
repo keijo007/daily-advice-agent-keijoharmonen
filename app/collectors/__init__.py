@@ -17,6 +17,8 @@ from app.collectors.goals_collector import GoalsCollector
 from app.collectors.youtube_collector import YouTubeCollector
 from app.collectors.telegram_collector import TelegramCollector
 from app.collectors.linkedin_export_collector import LinkedInExportCollector
+from app.collectors.gmail_collector import GmailCollector
+from app.collectors.outlook_collector import OutlookCollector
 
 __all__ = [
     "BaseCollector",
@@ -27,4 +29,6 @@ __all__ = [
     "YouTubeCollector",
     "TelegramCollector",
     "LinkedInExportCollector",
+    "GmailCollector",
+    "OutlookCollector",
 ]

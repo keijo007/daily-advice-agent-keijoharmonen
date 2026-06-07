@@ -34,8 +34,9 @@ class SourceType(str, Enum):
     YOUTUBE = "youtube"
     TELEGRAM = "telegram"
     LINKEDIN = "linkedin"
+    GMAIL = "gmail"
+    OUTLOOK = "outlook"
     # Extension points for future sources:
-    # LINKEDIN = "linkedin"
     # PODCAST = "podcast"
     # EMAIL = "email"
 

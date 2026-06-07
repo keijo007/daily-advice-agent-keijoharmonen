@@ -82,6 +82,10 @@ class Config:
         "ONEDRIVE_DIARY_PATH",
         "",
     )
+    ONEDRIVE_GOALS_FILE_PATH = os.getenv(
+        "ONEDRIVE_GOALS_FILE_PATH",
+        "",
+    )
     ONEDRIVE_LINKEDIN_EXPORT_PATH = os.getenv(
         "ONEDRIVE_LINKEDIN_EXPORT_PATH",
         "",
@@ -91,6 +95,21 @@ class Config:
         "",
     )
     RSS_SOURCES_FILE = DATA_DIR / "rss_sources.txt"
+
+    # ========== EMAIL CONFIGURATION ==========
+    GMAIL_CLIENT_ID = os.getenv("GMAIL_CLIENT_ID", "")
+    GMAIL_CLIENT_SECRET = os.getenv("GMAIL_CLIENT_SECRET", "")
+    GMAIL_REFRESH_TOKEN = os.getenv("GMAIL_REFRESH_TOKEN", "")
+    GMAIL_LOOKBACK_DAYS = int(os.getenv("GMAIL_LOOKBACK_DAYS", 14))
+    GMAIL_MESSAGE_LIMIT = int(os.getenv("GMAIL_MESSAGE_LIMIT", 10))
+    GMAIL_QUERY = os.getenv("GMAIL_QUERY", "")
+
+    OUTLOOK_CLIENT_ID = os.getenv("OUTLOOK_CLIENT_ID", "") or os.getenv("AZURE_CLIENT_ID", "")
+    OUTLOOK_CLIENT_SECRET = os.getenv("OUTLOOK_CLIENT_SECRET", "") or os.getenv("AZURE_CLIENT_SECRET", "")
+    OUTLOOK_REFRESH_TOKEN = os.getenv("OUTLOOK_REFRESH_TOKEN", "") or os.getenv("ONEDRIVE_REFRESH_TOKEN", "")
+    OUTLOOK_TENANT_ID = os.getenv("OUTLOOK_TENANT_ID", "") or os.getenv("AZURE_TENANT_ID", "")
+    OUTLOOK_LOOKBACK_DAYS = int(os.getenv("OUTLOOK_LOOKBACK_DAYS", 14))
+    OUTLOOK_MESSAGE_LIMIT = int(os.getenv("OUTLOOK_MESSAGE_LIMIT", 10))
 
     # ========== AGENT CONFIGURATION ==========
     # How many recent diary entries to include in reflection

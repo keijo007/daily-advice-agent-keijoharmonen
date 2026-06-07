@@ -81,27 +81,19 @@ def upload_to_onedrive():
             return
         
         today = datetime.now().strftime("%Y-%m-%d")
-        json_file = Path(f"data/daily_insights/{today}.json")
-        
-        if json_file.exists():
-            print(f"📂 Reading: {json_file}")
-            with open(json_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+        print("ℹ️  Generating insight directly from pipeline")
+        from app.services.daily_pipeline import DailyPipeline
+
+        pipeline = DailyPipeline()
+        insight = pipeline.run()
+        if not insight:
+            print("✗ Pipeline failed, cannot upload insight")
+            return
+
+        if hasattr(insight, '__dict__'):
+            data = insight.__dict__
         else:
-            print(f"⚠️  Local JSON not found: {json_file}")
-            print("ℹ️  Generating insight directly from pipeline instead")
-            from app.services.daily_pipeline import DailyPipeline
-
-            pipeline = DailyPipeline()
-            insight = pipeline.run()
-            if not insight:
-                print("✗ Pipeline failed, cannot upload insight")
-                return
-
-            if hasattr(insight, '__dict__'):
-                data = insight.__dict__
-            else:
-                data = insight if isinstance(insight, dict) else {}
+            data = insight if isinstance(insight, dict) else {}
 
         summary_text = build_markdown_summary(data)
 

@@ -40,15 +40,11 @@ jobs:
         run: |
           git config user.email "action@github.com"
           git config user.name "Daily Insight Bot"
-          git add data/daily_insights/
           git add index.html
           git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
           git push
       
       - name: Display generated files
         run: |
-          echo "📊 Generated files:"
-          ls -la data/daily_insights/ || echo "No insights directory"
-          echo ""
           echo "📄 Latest index:"
           head -20 index.html || echo "No index.html"
