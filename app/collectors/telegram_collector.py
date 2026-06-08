@@ -4,6 +4,7 @@ Telegram Collector - fetches recent messages from Telegram channels.
 Requires Telethon user session (TELEGRAM_SESSION_STRING).
 """
 
+import re
 from datetime import datetime, timedelta
 from typing import List
 from app.collectors.base_collector import BaseCollector
@@ -59,26 +60,32 @@ class TelegramCollector(BaseCollector):
                     if not messages:
                         continue
 
+                    messages.sort(key=lambda x: x[0], reverse=True)
+                    latest_timestamp = messages[0][0]
+                    combined_text = " ".join(text.replace("\n", " ").strip() for _, text in messages[:30])
+                    themes = self._extract_themes(combined_text)
+
                     summary_lines = [
                         f"Channel: {channel}",
                         f"Messages: {len(messages)} (last {config.TELEGRAM_LOOKBACK_DAYS} days)",
-                        "Recent snippets:",
+                        "Key themes: " + (", ".join(themes) if themes else "No clear themes detected"),
+                        "Highlights:",
                     ]
                     for ts, text in messages[:10]:
                         snippet = text.replace("\n", " ").strip()
-                        if len(snippet) > 160:
-                            snippet = snippet[:160] + "..."
+                        if len(snippet) > 200:
+                            snippet = snippet[:200] + "..."
                         summary_lines.append(f"- {ts.strftime('%Y-%m-%d %H:%M')}: {snippet}")
 
                     item = self._create_item(
                         title=f"Telegram: {channel}",
                         content="\n".join(summary_lines),
                         author="Telegram",
-                        timestamp=datetime.now(),
+                        timestamp=latest_timestamp,
                         raw_path=f"telegram:{channel}",
                     )
                     items.append(item)
-                    print(f"📨 Loaded Telegram: {channel}")
+                    print(f"📨 Loaded Telegram: {channel} ({len(messages)} messages)")
                 except Exception as e:
                     print(f"⚠️  Telegram channel failed {channel}: {e}")
 
@@ -103,3 +110,22 @@ class TelegramCollector(BaseCollector):
                 value = value[1:]
             channels.append(value)
         return list(dict.fromkeys(channels))
+
+    @staticmethod
+    def _extract_themes(text: str, top_n: int = 5) -> List[str]:
+        """Extract the most common content themes from channel messages."""
+        stopwords = {
+            "the", "and", "for", "with", "from", "this", "that", "have",
+            "your", "they", "their", "about", "will", "what", "when",
+            "there", "here", "which", "been", "also", "will", "just",
+            "like", "them", "then", "some", "more", "also", "today",
+            "message", "channel", "telegram", "post", "author",
+        }
+        words = re.findall(r"[A-Za-zÅÄÖåäö]+", text.lower())
+        counts = {}
+        for word in words:
+            if len(word) < 4 or word in stopwords:
+                continue
+            counts[word] = counts.get(word, 0) + 1
+        sorted_terms = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+        return [term for term, _ in sorted_terms[:top_n]]

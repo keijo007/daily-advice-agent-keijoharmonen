@@ -103,14 +103,16 @@ COGNITIVE BIASES TO CONSIDER:
 - In-group bias (favoring certain perspectives)
 
 YOUR OUTPUT:
-Return valid JSON with these fields:
-- key_observations: List of significant patterns or contradictions
-- thinking_biases_detected: List of {bias_name, evidence} objects
-- alignment_with_goals: {aligned, misaligned, unclear} lists
-- patterns_noticed: Recurring themes you see
-- blind_spots: What they might not be seeing
-- hypothesis: Your best guess at what's really going on
-- uncertainties: What you're unsure about
+Return valid JSON with fields that make sense for this analysis. You can use narrative sections, a few thoughtful observations, or bullet-style insights.
+Focus on clarity, not rigidity.
+Helpful responses may include:
+- key_observations: patterns or meaningful shifts
+- thinking_biases_detected: bias names and why they matter
+- alignment_with_goals: where actions and goals match or diverge
+- patterns_noticed: recurring themes
+- blind_spots: what may be missing or overlooked
+- hypothesis: a plausible explanation for what is happening
+- uncertainties: what remains unclear
 """
     
     def think(self, agent_input: AgentInput) -> Dict[str, Any]:
