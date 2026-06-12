@@ -446,3 +446,8 @@ class DailyPipeline:
 
 # Lazy import to avoid circular dependency at module import time.
 from app.processing.opportunity_extractor import OpportunityExtractor  # noqa: E402
+
+
+def run_daily_pipeline() -> Optional[DailyBrief]:
+    """Backward-compatible helper for legacy callers."""
+    return DailyPipeline().run_daily()
