@@ -48,10 +48,15 @@ class MarkdownRenderer:
             for i, signal in enumerate(brief.top_signals, 1):
                 lines.append(f"### {i}. {signal.title}")
                 lines.append("")
+                if signal.item_id:
+                    lines.append(f"**Item ID:** `{signal.item_id}`")
                 lines.append(f"**Source:** {signal.source}")
                 lines.append(f"**Type:** {signal.source_type.value}")
                 lines.append(f"**Score:** {signal.score:.1f}/10")
                 lines.append("")
+                if signal.content:
+                    lines.append(f"**Source voice excerpt:** {signal.content}")
+                    lines.append("")
                 lines.append(f"**Why it matters:** {signal.why_matters}")
                 lines.append("")
                 lines.append(f"**Suggested action:** {signal.suggested_action}")

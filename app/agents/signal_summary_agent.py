@@ -43,6 +43,7 @@ class SignalSummaryAgent:
                 suggested_action = self._heuristic_action(item)
             
             signal = Signal(
+                item_id=item.compute_hash(),
                 title=item.title,
                 content=item.content[:200],  # Truncate for signal card
                 source=item.author or item.source.value,

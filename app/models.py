@@ -232,6 +232,7 @@ class ScoredItem:
 @dataclass
 class Signal:
     """Top signal for daily brief."""
+    item_id: Optional[str]
     title: str
     content: str
     source: str
@@ -248,6 +249,7 @@ class Signal:
     
     def to_dict(self) -> dict:
         return {
+            "item_id": self.item_id,
             "title": self.title,
             "content": self.content,
             "source": self.source,

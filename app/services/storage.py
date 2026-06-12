@@ -409,6 +409,22 @@ class StorageService:
             
             data = json.loads(row[0])
             return self._dict_to_daily_brief(data)
+
+    def get_recent_briefs(self, limit: int = 7) -> List[DailyBrief]:
+        """Get recent DailyBriefs (latest first)."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT brief_json FROM daily_briefs
+                ORDER BY date DESC
+                LIMIT ?
+            """, (limit,))
+            rows = cursor.fetchall()
+            briefs: List[DailyBrief] = []
+            for row in rows:
+                data = json.loads(row[0])
+                briefs.append(self._dict_to_daily_brief(data))
+            return briefs
     
     @staticmethod
     def _dict_to_daily_brief(data: dict) -> DailyBrief:
@@ -420,6 +436,7 @@ class StorageService:
         # Reconstruct signals
         brief.top_signals = [
             Signal(
+                item_id=s.get("item_id", None),
                 title=s["title"],
                 content=s["content"],
                 source=s["source"],

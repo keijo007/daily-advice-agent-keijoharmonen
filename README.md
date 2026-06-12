@@ -44,6 +44,24 @@ Prepared stubs (no credentials required yet):
 - Calendar
 - YouTube
 
+## External Credentials (Still Supported)
+
+These environment variables are still used by the current program:
+
+- `OPENAI_API_KEY`: Enables LLM summaries (optional).
+- `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `AZURE_TENANT_ID`, `ONEDRIVE_REFRESH_TOKEN`:
+  Used by OneDrive/Microsoft Graph (Outlook, LinkedIn export, WhatsApp export, and uploads).
+- `GMAIL_CLIENT_ID`, `GMAIL_CLIENT_SECRET`, `GMAIL_REFRESH_TOKEN`:
+  Used by Gmail collector.
+- `OUTLOOK_CLIENT_ID`, `OUTLOOK_CLIENT_SECRET`, `OUTLOOK_REFRESH_TOKEN`:
+  Used by Outlook collector.
+- `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION_STRING`:
+  Used by Telegram collector.
+- `TOKEN_GITHUB`: Reserved for future GitHub API collector (not used yet).
+
+To enable Gmail/Outlook/Telegram/YouTube collectors, set `email.enabled` or
+`social.enabled` to true in `config/sources.yaml` (or use `config/settings.yaml` flags).
+
 ## Configuration
 
 Copy and edit examples:

@@ -33,6 +33,12 @@ from app.collectors import (
     RSSCollector,
     TelegramCollectorStub,
     YouTubeCollectorStub,
+    GmailCollector,
+    OutlookCollector,
+    TelegramCollector,
+    YouTubeCollector,
+    LinkedInExportCollector,
+    WhatsAppCollector,
 )
 from app.config import config
 from app.models import ContentItem, DailyBrief, SignalType, WeakSignal
@@ -143,6 +149,12 @@ class DailyPipeline:
         signal_agent = SignalSummaryAgent(openai_client=self.openai_client)
         signals = signal_agent.process(signal_candidates)
 
+        # Preserve source voice by appending direct quote excerpt from each source item.
+        for signal, source_item in zip(signals, signal_candidates):
+            excerpt = self._source_voice_excerpt(source_item.item.content)
+            if excerpt:
+                signal.content = excerpt
+
         all_items = [s.item for s in scored_items]
         opportunities = OpportunityAgent().process(OpportunityExtractor().extract_opportunities(all_items))
         claims = ClaimCheckerAgent().process(ClaimExtractor().extract_claims(all_items))
@@ -164,7 +176,31 @@ class DailyPipeline:
             openai_client=self.openai_client if allow_diary_llm else None,
             allow_external_llm_for_diary=allow_diary_llm,
         )
-        thinking_mirror = reflection.process(scored_items, recent_diary, goals, current_state)
+        previous_context = self._recent_brief_context(recent_briefs)
+        context_with_history = current_state or ""
+        if previous_context:
+            context_with_history = (
+                f"{context_with_history}\n\nprevious_brief_context:\n{previous_context}".strip()
+            )
+
+        thinking_mirror = reflection.process(
+            scored_items,
+            recent_diary,
+            goals,
+            context_with_history,
+        )
+
+        recent_briefs = self.storage.get_recent_briefs(limit=7)
+        feedback_counts = self._build_feedback_map()
+
+        # Boost/deprioritize scored items based on historical feedback memory.
+        for scored in scored_items:
+            item_id = scored.item.compute_hash()
+            fb = feedback_counts.get(item_id, {"+": 0, "-": 0, "!": 0})
+            scored.signal_score += 0.3 * fb.get("+", 0)
+            scored.signal_score += 0.6 * fb.get("!", 0)
+            scored.signal_score -= 0.4 * fb.get("-", 0)
+            scored.signal_score = max(0.0, min(10.0, scored.signal_score))
 
         synthesizer = BriefSynthesizer(openai_client=self.openai_client)
         brief = synthesizer.synthesize(
@@ -178,6 +214,19 @@ class DailyPipeline:
             goals=goals,
             current_state=current_state,
         )
+
+        # Add continuity note from previous days.
+        if recent_briefs:
+            continuity_note = self._build_continuity_note(recent_briefs)
+            if continuity_note:
+                brief.low_priority_noise.insert(
+                    0,
+                    {
+                        "title": "Continuity note",
+                        "reason": continuity_note,
+                        "source": "memory",
+                    },
+                )
 
         self.storage.save_daily_brief(brief)
 
@@ -219,13 +268,51 @@ class DailyPipeline:
         ]
 
         sources_cfg = self._load_yaml(self.sources_path)
-        # Include stubs only when explicitly enabled.
-        if (sources_cfg.get("email") or {}).get("enabled"):
-            collectors.extend([GmailCollectorStub(), OutlookCollectorStub()])
-        if (sources_cfg.get("social") or {}).get("enabled"):
-            collectors.extend([TelegramCollectorStub(), YouTubeCollectorStub()])
-        if (sources_cfg.get("calendar") or {}).get("enabled"):
+        settings_sources = self.settings.get("sources") or {}
+
+        include_email = bool((sources_cfg.get("email") or {}).get("enabled")) or bool(
+            settings_sources.get("include_email")
+        )
+        include_social = bool((sources_cfg.get("social") or {}).get("enabled")) or bool(
+            settings_sources.get("include_social_media")
+        )
+        include_calendar = bool((sources_cfg.get("calendar") or {}).get("enabled")) or bool(
+            settings_sources.get("include_calendar")
+        )
+
+        # Email (Gmail / Outlook)
+        if include_email:
+            if config.GMAIL_CLIENT_ID and config.GMAIL_CLIENT_SECRET and config.GMAIL_REFRESH_TOKEN:
+                collectors.append(GmailCollector())
+            else:
+                collectors.append(GmailCollectorStub())
+
+            if config.OUTLOOK_CLIENT_ID and (config.OUTLOOK_CLIENT_SECRET or config.OUTLOOK_REFRESH_TOKEN):
+                collectors.append(OutlookCollector())
+            else:
+                collectors.append(OutlookCollectorStub())
+
+        # Social (Telegram / YouTube)
+        if include_social:
+            if config.TELEGRAM_API_ID and config.TELEGRAM_API_HASH and config.TELEGRAM_SESSION_STRING:
+                collectors.append(TelegramCollector())
+            else:
+                collectors.append(TelegramCollectorStub())
+
+            if config.YOUTUBE_CHANNEL_URLS:
+                collectors.append(YouTubeCollector())
+            else:
+                collectors.append(YouTubeCollectorStub())
+
+        # Calendar (stub only for now)
+        if include_calendar:
             collectors.append(CalendarCollectorStub())
+
+        # OneDrive export-based collectors (auto-enable if paths configured)
+        if config.ONEDRIVE_LINKEDIN_EXPORT_PATH:
+            collectors.append(LinkedInExportCollector())
+        if config.ONEDRIVE_WHATSAPP_EXPORT_PATH:
+            collectors.append(WhatsAppCollector())
 
         return collectors
 
@@ -277,6 +364,84 @@ class DailyPipeline:
         with path.open("a", encoding="utf-8") as handle:
             for row in rows:
                 handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def _build_feedback_map(self) -> Dict[str, Dict[str, int]]:
+        """Load feedback counts grouped by item_id and rating."""
+        counts: Dict[str, Dict[str, int]] = {}
+
+        # JSONL source
+        feedback_path = self.data_dir / "feedback.jsonl"
+        if feedback_path.exists():
+            try:
+                for line in feedback_path.read_text(encoding="utf-8").splitlines():
+                    if not line.strip():
+                        continue
+                    row = json.loads(line)
+                    item_id = row.get("item_id")
+                    rating = row.get("rating")
+                    if not item_id or rating not in {"+", "-", "?", "!"}:
+                        continue
+                    counts.setdefault(item_id, {"+": 0, "-": 0, "?": 0, "!": 0})
+                    counts[item_id][rating] += 1
+            except Exception:
+                pass
+
+        # SQLite source
+        try:
+            import sqlite3
+
+            with sqlite3.connect(self.storage.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT item_id, rating FROM feedback")
+                for item_id, rating in cursor.fetchall():
+                    if not item_id or rating not in {"+", "-", "?", "!"}:
+                        continue
+                    counts.setdefault(item_id, {"+": 0, "-": 0, "?": 0, "!": 0})
+                    counts[item_id][rating] += 1
+        except Exception:
+            pass
+
+        return counts
+
+    @staticmethod
+    def _source_voice_excerpt(text: str) -> str:
+        """Keep source voice by extracting a direct short excerpt."""
+        if not text:
+            return ""
+        sentences = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
+        if not sentences:
+            return text[:200]
+        excerpt = sentences[0][:220]
+        return f'"{excerpt}"'
+
+    @staticmethod
+    def _build_continuity_note(recent_briefs: List[DailyBrief]) -> str:
+        """Summarize continuity from recent days for memory effect."""
+        if not recent_briefs:
+            return ""
+        repeated_titles: Dict[str, int] = {}
+        for brief in recent_briefs:
+            for signal in brief.top_signals[:5]:
+                title = (signal.title or "").strip().lower()
+                if title:
+                    repeated_titles[title] = repeated_titles.get(title, 0) + 1
+        recurring = [title for title, n in repeated_titles.items() if n >= 2]
+        if not recurring:
+            return "No repeating top signals from recent days."
+        top = "; ".join(recurring[:3])
+        return f"Recurring signals from previous days: {top}."
+
+    @staticmethod
+    def _recent_brief_context(recent_briefs: List[DailyBrief], limit: int = 3) -> str:
+        """Compact context string from recent generated briefs."""
+        if not recent_briefs:
+            return ""
+        parts: List[str] = []
+        for brief in recent_briefs[:limit]:
+            top_titles = ", ".join(signal.title for signal in brief.top_signals[:3])
+            action = brief.recommended_action_today or ""
+            parts.append(f"{brief.date}: top=[{top_titles}] action=[{action}]")
+        return " | ".join(parts)
 
 
 # Lazy import to avoid circular dependency at module import time.
