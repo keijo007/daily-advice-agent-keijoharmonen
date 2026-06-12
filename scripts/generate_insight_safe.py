@@ -1,456 +1,64 @@
 #!/usr/bin/env python3
 """
-Daily Insight Generator - GitHub Actions Edition
-Yhden tiedoston ratkaisu joka toimii ilman virheitä.
+Safe runner for Personal Signal OS.
 
-Käsittelee:
-- Puuttuvat tiedostot/kansiot
-- Puuttuvat ympäristömuuttujat
-- API-virheet
-- Konfiguraatio-ongelmat
+Creates missing local directories/files and runs markdown brief generation.
 """
 
-import json
-import sys
-import os
-import logging
+from __future__ import annotations
+
 from datetime import datetime
 from pathlib import Path
+import sys
 
-# Aseta parent-kansio PATH:iin
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.config import config
-from app.services.onedrive_client import OneDriveClient
-
-# ============================================================================
-# SETUP
-# ============================================================================
-
-# Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-# ============================================================================
-# SAFETY CHECKS
-# ============================================================================
-
-def check_environment():
-    """Tarkista ympäristön kunto."""
-    logger.info("🔍 Tarkistetaan ympäristö...")
-    
-    # 1. Tarkista Python-versio
-    if sys.version_info < (3, 9):
-        logger.error(f"❌ Python 3.9+ vaaditaan, sinulla on {sys.version}")
-        return False
-    
-    logger.info(f"✓ Python {sys.version.split()[0]}")
-    
-    # 2. Tarkista OpenAI API key
-    api_key = os.getenv("OPENAI_API_KEY", "")
-    if not api_key:
-        logger.error("❌ OPENAI_API_KEY ei asetettu")
-        logger.info("   Aseta GitHub Secrets: OPENAI_API_KEY")
-        return False
-    
-    if not api_key.startswith("sk-"):
-        logger.error("❌ OPENAI_API_KEY näyttää olevan väärä (ei alusta sk-)")
-        return False
-    
-    logger.info(f"✓ OPENAI_API_KEY asetettu ({api_key[:10]}...)")
-    
-    return True
+from app.services.daily_pipeline import DailyPipeline
 
 
-def create_data_directories():
-    """Luo tarvittavat data-kansiot."""
-    logger.info("📁 Luodaan data-kansiot...")
-    
-    dirs = [
-        Path("data/diary"),
-        Path("data/goals"),
-        Path("data/whatsapp_exports"),
-    ]
-    
-    for dir_path in dirs:
-        dir_path.mkdir(parents=True, exist_ok=True)
-        logger.info(f"  ✓ {dir_path}")
-    
-    return True
+def ensure_local_files(root: Path):
+    personal = root / "data" / "personal"
+    diary = personal / "diary"
+    outputs = root / "outputs" / "daily_briefs"
 
+    diary.mkdir(parents=True, exist_ok=True)
+    outputs.mkdir(parents=True, exist_ok=True)
 
-def ensure_data_files():
-    """Varmista että data-tiedostot olemassa."""
-    logger.info("📄 Varmistetaan data-tiedostot...")
-    
-    # Luodaan goals.txt jos ei olemassa
-    goals_file = Path("data/goals/goals.txt")
-    if not goals_file.exists():
-        goals_file.write_text("""1. Oppia GitHub Actionsia
-2. Hyödyntää tekoälyä päivittäin
-3. Analysoida omia ajattelumalleja
-4. Antaa rakentavaa palautetta järjestelmään
-""")
-        logger.info(f"  ✓ Luotu {goals_file} (placeholder)")
-    else:
-        logger.info(f"  ✓ {goals_file} olemassa")
-    
-    # Luodaan example diary entry
-    diary_file = Path("data/diary") / f"{datetime.now().strftime('%Y-%m-%d')}.md"
-    if not diary_file.exists():
-        diary_file.write_text(f"""# Päivän merkintä - {datetime.now().strftime('%d.%m.%Y')}
-
-## Saavutukset
-- Aloitettiin Daily Insight Agent GitHub Actionsissa
-- Konfiguroitiin automaattinen päivittäinen ajo
-
-## Havainnot
-- Tekoäly voi analysoida monimutkaisia järjestelmiä
-- Automation säästää aikaa
-
-## Tavoitteet huomiselle
-- Testata systeemin toimintaa
-- Korjata mahdolliset virheet
-""")
-        logger.info(f"  ✓ Luotu {diary_file} (placeholder)")
-    else:
-        logger.info(f"  ✓ {diary_file} olemassa")
-    
-    # RSS sources
-    rss_file = Path("data/rss_sources.txt")
-    if not rss_file.exists():
-        rss_file.write_text("""# RSS-syötteet
-# Lisää oma syötteitä alle
-https://news.ycombinator.com/rss
-https://techcrunch.com/feed/
-""")
-        logger.info(f"  ✓ Luotu {rss_file} (placeholder)")
-    else:
-        logger.info(f"  ✓ {rss_file} olemassa")
-    
-    return True
-
-
-def check_dependencies():
-    """Tarkista että vaadittavat moduulit on asennettu."""
-    logger.info("📦 Tarkistetaan riippuvuudet...")
-    
-    required = [
-        "fastapi",
-        "openai",
-        "feedparser",
-        "pydantic",
-        "dotenv",
-    ]
-    
-    missing = []
-    for module in required:
-        try:
-            __import__(module)
-            logger.info(f"  ✓ {module}")
-        except ImportError:
-            logger.error(f"  ❌ {module} puuttuu")
-            missing.append(module)
-    
-    if missing:
-        logger.error(f"❌ Asenna puuttuvat moduulit: pip install {' '.join(missing)}")
-        return False
-    
-    return True
-
-
-# ============================================================================
-# MAIN GENERATION
-# ============================================================================
-
-def generate_insight():
-    """Generoi päivittäinen insight."""
-    logger.info("\n" + "="*60)
-    logger.info("🚀 DAILY INSIGHT GENERATOR - Starting")
-    logger.info("="*60)
-    
-    try:
-        # Import pipeline
-        logger.info("📥 Ladataan pipeline...")
-        from app.services.daily_pipeline import DailyPipeline
-        
-        # Luo pipeline
-        pipeline = DailyPipeline()
-        
-        # Aja pipeline
-        logger.info("⏳ Ajetaan pipeline...")
-        insight = pipeline.run()
-        
-        if not insight:
-            logger.error("❌ Pipeline palautti None")
-            return False
-        
-        # Generoi HTML
-        logger.info("🎨 Generoidaan HTML...")
-        html = generate_html(insight)
-        
-        # Tallenna HTML
-        today = datetime.now().strftime("%Y-%m-%d")
-        
-        index_file = Path("index.html")
-        index_file.write_text(html)
-        logger.info(f"  ✓ Tallennettu {index_file}")
-        
-        if hasattr(insight, '__dict__'):
-            insight_dict = insight.__dict__
-        else:
-            insight_dict = insight if isinstance(insight, dict) else {}
-
-        if config.UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE:
-            _upload_insight_to_onedrive(insight_dict, today)
-        else:
-            logger.info("ℹ️  OneDrive upload disabled by UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE")
-        
-        logger.info("\n" + "="*60)
-        logger.info("✅ SUCCESS - Insight generated successfully")
-        logger.info("="*60 + "\n")
-        
-        return True
-        
-    except Exception as e:
-        logger.error(f"\n❌ ERROR during generation: {e}", exc_info=True)
-        return False
-
-
-def _upload_insight_to_onedrive(insight_dict: dict, today: str) -> None:
-    client = OneDriveClient()
-    if not client.enabled:
-        logger.warning("⚠️  OneDrive ei ole konfiguroitu, ei lähetetä")
-        return
-
-    if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
-        filename = f"{today}.json"
-        logger.info(f"📤 Lähetetään OneDrive-jakolinkkiin: {filename}")
-        uploaded = client.upload_to_shared_folder(
-            config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
-            filename,
-            json.dumps(insight_dict, ensure_ascii=False, indent=2),
+    goals = personal / "goals.md"
+    if not goals.exists():
+        goals.write_text(
+            "# Goals\n\n## current_focus\n- Build Personal Signal OS\n",
+            encoding="utf-8",
         )
-    elif config.ONEDRIVE_DAILY_INSIGHTS_PATH:
-        onedrive_path = f"{config.ONEDRIVE_DAILY_INSIGHTS_PATH.rstrip('/')}/{today}.json"
-        logger.info(f"📤 Lähetetään OneDrive-polkuun: {onedrive_path}")
-        uploaded = client.write_file(
-            onedrive_path,
-            json.dumps(insight_dict, ensure_ascii=False, indent=2),
+
+    state = personal / "current_state.yaml"
+    if not state.exists():
+        state.write_text(
+            "current_focus:\n  - Build Personal Signal OS\n\navoid:\n  - hype without evidence\n",
+            encoding="utf-8",
         )
-    else:
-        logger.warning("⚠️  OneDrive-polku tai jakolinkki puuttuu, ei lähetetä")
-        return
 
-    if uploaded:
-        logger.info(f"✓ Insight lähetetty OneDriveen: {today}.json")
-    else:
-        logger.error("✗ OneDrive-lähetys epäonnistui")
-
-
-def generate_html(insight_data):
-    """Generoi kaunis HTML."""
-    
-    def safe_get(d, key, default=""):
-        if not d:
-            return default
-        if isinstance(d, dict):
-            return d.get(key, default)
-        return default
-    
-    warnings = safe_get(insight_data, 'warnings', [])
-    if isinstance(warnings, list):
-        warnings_html = "\n".join([f"<li>{w}</li>" for w in warnings])
-    else:
-        warnings_html = f"<li>{warnings}</li>"
-    
-    date_str = datetime.now().strftime('%d.%m.%Y')
-    reader_summary = safe_get(insight_data, 'summary', 'Ei sisältöä')
-    reflection_summary = safe_get(insight_data, 'observations', 'Ei analyyseja')
-    practical_tip = safe_get(insight_data, 'practical_tip', 'Ei vinkkejä')
-    one_day_action = safe_get(insight_data, 'one_day_action', 'Ei toimintaa')
-    
-    html = f"""<!DOCTYPE html>
-<html lang="fi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Insight - {date_str}</title>
-    <style>
-        * {{
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }}
-        
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }}
-        
-        .container {{
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }}
-        
-        .header {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
-            text-align: center;
-        }}
-        
-        .header h1 {{
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }}
-        
-        .content {{
-            padding: 40px;
-        }}
-        
-        .section {{
-            margin-bottom: 40px;
-        }}
-        
-        .section h2 {{
-            color: #2c3e50;
-            font-size: 1.8em;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
-        }}
-        
-        .section p {{
-            color: #34495e;
-            line-height: 1.8;
-            font-size: 1.05em;
-        }}
-        
-        .tip {{
-            background: linear-gradient(135deg, #e8f4f8 0%, #f0f8fb 100%);
-            border-left: 5px solid #3498db;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 6px;
-        }}
-        
-        .warning {{
-            background: linear-gradient(135deg, #fff8e1 0%, #fffbf0 100%);
-            border-left: 5px solid #f39c12;
-            padding: 20px;
-            margin: 15px 0;
-            border-radius: 6px;
-        }}
-        
-        .footer {{
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            color: #7f8c8d;
-            font-size: 0.9em;
-            border-top: 1px solid #ecf0f1;
-        }}
-        
-        @media (max-width: 600px) {{
-            .content {{
-                padding: 20px;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>📊 Päivittäinen yhteenveto</h1>
-            <p>Daily Insight Agent</p>
-        </div>
-        
-        <div class="content">
-            <div class="section">
-                <h2>📰 Tänään lukemasi</h2>
-                <p>{reader_summary}</p>
-            </div>
-            
-            <div class="section">
-                <h2>🧠 Havainnot ajattelustasi</h2>
-                <p>{reflection_summary}</p>
-            </div>
-            
-            <div class="section">
-                <h2>💡 Tämän päivän vinkki</h2>
-                <div class="tip">{practical_tip}</div>
-            </div>
-            
-            <div class="section">
-                <h2>🎯 Toimintaohje</h2>
-                <p>{one_day_action}</p>
-            </div>
-            
-            <div class="section">
-                <h2>⚠️ Huomioitavaa</h2>
-                <div class="warning">
-                    <ul>{warnings_html}</ul>
-                </div>
-            </div>
-        </div>
-        
-        <div class="footer">
-            <p>Generoitu {date_str} | GitHub Actions</p>
-        </div>
-    </div>
-</body>
-</html>"""
-    
-    return html
+    today_diary = diary / f"{datetime.now().strftime('%Y-%m-%d')}.md"
+    if not today_diary.exists():
+        today_diary.write_text(
+            "# Daily note\n\nCaptured initial state for Personal Signal OS run.\n",
+            encoding="utf-8",
+        )
 
 
-# ============================================================================
-# MAIN
-# ============================================================================
+def main() -> int:
+    root = Path(__file__).parent.parent
+    ensure_local_files(root)
+
+    pipeline = DailyPipeline()
+    brief = pipeline.run_daily()
+    if not brief:
+        print("✗ Failed to generate daily brief")
+        return 1
+
+    print(f"✓ Safe run complete for {brief.date}")
+    return 0
+
 
 if __name__ == "__main__":
-    try:
-        # 1. Tarkista ympäristö
-        if not check_environment():
-            logger.error("\n❌ Ympäristön tarkistus epäonnistui")
-            sys.exit(1)
-        
-        # 2. Luo kansiot
-        if not create_data_directories():
-            logger.error("\n❌ Kansioiden luominen epäonnistui")
-            sys.exit(1)
-        
-        # 3. Varmista data-tiedostot
-        if not ensure_data_files():
-            logger.error("\n❌ Data-tiedostojen varmistus epäonnistui")
-            sys.exit(1)
-        
-        # 4. Tarkista riippuvuudet
-        if not check_dependencies():
-            logger.error("\n❌ Riippuvuuksien tarkistus epäonnistui")
-            sys.exit(1)
-        
-        # 5. Generoi insight
-        if not generate_insight():
-            logger.error("\n❌ Insightin generointi epäonnistui")
-            sys.exit(1)
-        
-        logger.info("✅ Kaikki valmis!")
-        sys.exit(0)
-        
-    except KeyboardInterrupt:
-        logger.info("\n⏸️  Käyttäjä peruutti")
-        sys.exit(130)
-    except Exception as e:
-        logger.error(f"\n💥 Odottamaton virhe: {e}", exc_info=True)
-        sys.exit(1)
+    raise SystemExit(main())

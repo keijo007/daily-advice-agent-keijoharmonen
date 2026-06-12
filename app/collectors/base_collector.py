@@ -22,7 +22,7 @@ HOW TO EXTEND:
 from abc import ABC, abstractmethod
 from typing import List
 from datetime import datetime
-from app.models import ContentItem, SourceType
+from app.models import ContentItem, SourceType, SourceBias
 
 
 class BaseCollector(ABC):
@@ -64,6 +64,13 @@ class BaseCollector(ABC):
         timestamp: datetime = None,
         url: str = None,
         raw_path: str = None,
+        source_bias: SourceBias = SourceBias.UNKNOWN,
+        topics: List[str] = None,
+        people: List[str] = None,
+        places: List[str] = None,
+        claims: List[str] = None,
+        deadline: datetime = None,
+        actionability_score: float = 0.0,
     ) -> ContentItem:
         """
         Helper method to create a ContentItem.
@@ -81,6 +88,13 @@ class BaseCollector(ABC):
             timestamp=timestamp,
             url=url,
             raw_path=raw_path,
+            source_bias=source_bias,
+            topics=topics,
+            people=people,
+            places=places,
+            claims=claims,
+            deadline=deadline,
+            actionability_score=actionability_score,
         )
     
     def __repr__(self) -> str:

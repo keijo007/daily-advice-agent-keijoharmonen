@@ -1,130 +1,65 @@
 """
-Upload generated insights to OneDrive (optional).
-
-This script uploads today's generated insight JSON file to OneDrive.
-Requires Azure credentials in environment variables.
-
-FOLDER STRUCTURE IN ONEDRIVE:
-  /DailyInsights/
-    2026-05-25.json
-    2026-05-26.json
-    ...
+Upload the generated Personal Signal OS markdown brief to OneDrive.
 """
 
-import sys
-import json
-from pathlib import Path
+from __future__ import annotations
+
 from datetime import datetime
+from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.services.onedrive_client import OneDriveClient
 from app.config import config
+from app.services.daily_pipeline import DailyPipeline
+from app.services.onedrive_client import OneDriveClient
 
 
-def build_markdown_summary(data: dict) -> str:
-    """Build a readable markdown summary from the daily insight JSON."""
-    lines = []
-    lines.append(f"# Daily Insight ({data.get('date', '')})")
-    lines.append("")
-    lines.append("## Main insight")
-    lines.append(data.get("main_insight", ""))
-    lines.append("")
-    lines.append("## Practical tip")
-    lines.append(data.get("practical_tip", ""))
-    lines.append("")
-    lines.append("## One-day action")
-    lines.append(data.get("one_day_action", ""))
-    lines.append("")
-    lines.append("## Source summary")
-    lines.append(data.get("source_summary", ""))
-    lines.append("")
-    lines.append("## Self reflection")
-    lines.append(data.get("self_reflection", ""))
-    lines.append("")
-    lines.append("## Thinking biases detected")
-    biases = data.get("thinking_biases_detected", [])
-    if isinstance(biases, list):
-        lines.extend([f"- {b}" for b in biases])
-    else:
-        lines.append(str(biases))
-    lines.append("")
-    lines.append("## Uncertainties / warnings")
-    warnings = data.get("uncertainties", [])
-    if isinstance(warnings, list):
-        lines.extend([f"- {w}" for w in warnings])
-    else:
-        lines.append(str(warnings))
-    lines.append("")
-    lines.append("## Sources used")
-    sources = data.get("sources_used", [])
-    if isinstance(sources, list):
-        lines.extend([f"- {s}" for s in sources])
-    else:
-        lines.append(str(sources))
+def _load_or_generate_markdown(today: str) -> str:
+    brief_path = Path("outputs") / "daily_briefs" / f"{today}.md"
+    if brief_path.exists():
+        return brief_path.read_text(encoding="utf-8")
 
-    return "\n".join(lines).strip() + "\n"
+    pipeline = DailyPipeline()
+    brief = pipeline.run_daily()
+    if not brief:
+        raise RuntimeError("Pipeline failed, no brief generated")
+
+    if not brief_path.exists():
+        raise RuntimeError(f"Expected brief file not found: {brief_path}")
+
+    return brief_path.read_text(encoding="utf-8")
 
 
 def upload_to_onedrive():
-    """Upload today's insight to OneDrive."""
-    
-    print("\n📤 UPLOADING TO ONEDRIVE")
-    print("-" * 40)
-    
-    try:
-        client = OneDriveClient()
-        
-        if not client.enabled:
-            print("⚠️  OneDrive not configured - skipping upload")
-            print("   Set AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID")
-            return
-        
-        today = datetime.now().strftime("%Y-%m-%d")
-        print("ℹ️  Generating insight directly from pipeline")
-        from app.services.daily_pipeline import DailyPipeline
+    print("\n📤 UPLOADING DAILY BRIEF TO ONEDRIVE")
+    print("-" * 45)
 
-        pipeline = DailyPipeline()
-        insight = pipeline.run()
-        if not insight:
-            print("✗ Pipeline failed, cannot upload insight")
-            return
+    client = OneDriveClient()
+    if not client.enabled:
+        print("⚠️  OneDrive not configured, skipping upload")
+        return
 
-        if hasattr(insight, '__dict__'):
-            data = insight.__dict__
-        else:
-            data = insight if isinstance(insight, dict) else {}
+    today = datetime.now().strftime("%Y-%m-%d")
+    markdown = _load_or_generate_markdown(today)
 
-        summary_text = build_markdown_summary(data)
+    if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
+        print("ℹ️  Uploading via shared folder URL")
+        ok = client.upload_to_shared_folder(
+            config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
+            f"{today}.md",
+            markdown,
+        )
+    else:
+        base = (config.ONEDRIVE_DAILY_INSIGHTS_PATH or "DailyInsights").rstrip("/")
+        remote_path = f"{base}/{today}.md"
+        print(f"ℹ️  Uploading to OneDrive path: {remote_path}")
+        ok = client.write_file(remote_path, markdown)
 
-        # Upload to OneDrive as text
-        if config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL:
-            print("📤 Uploading to shared folder link")
-            success = client.upload_to_shared_folder(
-                config.ONEDRIVE_DAILY_INSIGHTS_SHARE_URL,
-                f"{today}.md",
-                summary_text,
-            )
-        else:
-            base_path = config.ONEDRIVE_DAILY_INSIGHTS_PATH
-            onedrive_path = f"{base_path}/{today}.md"
-            print(f"📤 Uploading to: {onedrive_path}")
-
-            success = client.write_file(onedrive_path, summary_text)
-        
-        if success:
-            print(f"✓ Successfully uploaded to OneDrive")
-            print(f"   Location: /DailyInsights/{today}.json\n")
-        else:
-            print(f"✗ Failed to upload to OneDrive\n")
-            # Don't fail the workflow - continue gracefully
-    
-    except json.JSONDecodeError as e:
-        print(f"✗ Invalid JSON format: {e}")
-    except Exception as e:
-        print(f"✗ Error uploading to OneDrive: {e}")
-        import traceback
-        traceback.print_exc()
+    if ok:
+        print(f"✓ Uploaded {today}.md")
+    else:
+        print("✗ Upload failed")
 
 
 if __name__ == "__main__":

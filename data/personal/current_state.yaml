@@ -1,0 +1,15 @@
+current_focus:
+  - Build Personal Signal OS MVP
+  - Evaluate near-term opportunities
+
+avoid:
+  - illegal scraping
+  - too much social media noise
+  - hype without evidence
+  - vague productivity advice
+
+decision_deadlines:
+  - date: "2026-07-02"
+    description: "University entrance results"
+  - date: "2026-07-06"
+    description: "Service start date"

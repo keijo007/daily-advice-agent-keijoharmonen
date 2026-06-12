@@ -1,0 +1,46 @@
+# Personal Signal OS - Settings
+
+# Brief generation
+brief:
+  max_top_signals: 5
+  max_opportunities: 5
+  max_claims: 5
+  max_weak_signals: 5
+  max_noise_items: 10
+
+# Signal scoring thresholds
+scoring:
+  min_signal_score: 5.0          # Score >= 5.0 = SIGNAL
+  min_weak_signal_score: 3.0     # Score 3.0-4.9 = WEAK_SIGNAL
+  min_opportunity_score: 2.0     # Any item with opportunity keywords
+
+# Privacy settings
+privacy:
+  allow_external_llm_for_diary: false  # IMPORTANT: diary not sent to OpenAI unless true
+  allow_external_llm_for_goals: false  # Goals not sent to OpenAI unless true
+
+# LLM settings
+llm:
+  model: "gpt-4o-mini"           # or: gpt-4-turbo, gpt-3.5-turbo
+  temperature: 0.3               # 0.0-1.0: lower = more consistent, higher = more creative
+  max_tokens: 1000               # Max tokens per LLM call
+
+# Data sources
+sources:
+  include_rss: true
+  include_email: false
+  include_calendar: false
+  include_diary: true
+  include_goals: true
+  include_social_media: false
+
+# Feedback
+feedback:
+  enabled: true
+  file_path: "data/feedback.jsonl"
+
+# Output
+output:
+  markdown_brief_dir: "outputs/daily_briefs"  # Where to save daily briefs
+  include_json_export: true                   # Also export as JSON
+  json_export_dir: "outputs/daily_briefs_json"

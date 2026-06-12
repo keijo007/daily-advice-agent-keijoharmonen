@@ -1,0 +1,21 @@
+# Personal Signal OS runtime settings
+
+brief:
+  max_top_signals: 5
+  max_opportunities: 5
+  max_claims: 5
+  max_weak_signals: 5
+  max_noise_items: 10
+
+scoring:
+  min_signal_score: 5.0
+  min_weak_signal_score: 3.0
+
+privacy:
+  allow_external_llm_for_diary: false
+  allow_external_llm_for_goals: false
+
+llm:
+  model: "gpt-4o-mini"
+  temperature: 0.3
+  max_tokens: 1000

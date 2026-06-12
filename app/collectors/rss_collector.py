@@ -1,170 +1,153 @@
 """
-RSS Collector - fetches articles from RSS feeds.
+RSS collector for Personal Signal OS.
 
-WHY THIS FILE EXISTS:
-- RSS feeds are structured, machine-readable sources
-- Allows automatic collection of news, blogs, podcasts
-- Reader Agent uses these as the primary \"new external input\"
+Supports source definitions from:
+- config/sources.yaml
+- data/sources.yaml
 
-HOW IT WORKS:
-- Reads feed URLs from data/rss_sources.txt (one URL per line)
-- Fetches latest entries from each feed
-- Converts entries to ContentItem
-- Handles errors gracefully (one bad feed doesn't break everything)
-
-AGENT RELEVANCE:
-- Reader Agent: PRIMARY USER - summarizes these articles
-- Reflection Agent: Skips these (external content only)
-- Coach Agent: Uses Reader's summary to inform advice
-
-FEED FORMAT:
-data/rss_sources.txt contains:
-```
-https://example.com/feed
-https://news.ycombinator.com/rss
-# Comments are allowed
-```
-
-EXTENSION IDEAS:
-- Filter by keywords in title
-- Track which articles you've already seen
-- Sentiment analysis of headlines
-- Category-based organization
-- Add podcast feeds (RSS with audio)
+Fallback:
+- data/rss_sources.txt (legacy one-url-per-line format)
 """
 
-import feedparser
-from pathlib import Path
+from __future__ import annotations
+
 from datetime import datetime
-from typing import List, Optional
+from pathlib import Path
+from typing import Dict, List
+
+import feedparser
+
 from app.collectors.base_collector import BaseCollector
-from app.models import ContentItem, SourceType
 from app.config import config
+from app.models import ContentItem, SourceBias, SourceType
+from app.processing.normalizer import map_source_bias
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    yaml = None
 
 
 class RSSCollector(BaseCollector):
-    """Fetches articles from RSS feeds."""
-    
-    def __init__(self, sources_file: Path = None):
-        """
-        Initialize RSS collector.
-        
-        Args:
-            sources_file: Path to file with RSS URLs (one per line)
-        """
+    """Collect RSS items from configured feeds."""
+
+    def __init__(self, config_paths: List[Path] = None):
         super().__init__(SourceType.RSS)
-        self.sources_file = sources_file or config.RSS_SOURCES_FILE
-    
+        root = config.PROJECT_ROOT
+        self.config_paths = config_paths or [
+            root / "config" / "sources.yaml",
+            root / "data" / "sources.yaml",
+        ]
+        self.legacy_sources_file = config.RSS_SOURCES_FILE
+
     def collect(self) -> List[ContentItem]:
-        """
-        Fetch articles from all configured RSS feeds.
-        
-        Returns:
-            List of ContentItem objects from all feeds
-        """
-        items = []
-        
-        if not self.sources_file.exists():
-            print(f"ℹ️  RSS sources file not found: {self.sources_file}")
-            print(f"   Create {self.sources_file} with one RSS URL per line")
-            return items
-        
-        # Read feed URLs
-        feeds = self._load_feed_urls()
-        print(f"📰 Found {len(feeds)} RSS feeds to fetch")
-        
-        for feed_url in feeds:
-            try:
-                feed_items = self._fetch_feed(feed_url)
-                items.extend(feed_items)
-                print(f"  ✓ Fetched: {feed_url}")
-            except Exception as e:
-                print(f"  ✗ Error fetching {feed_url}: {e}")
-        
+        feeds = self._load_feeds()
+        if not feeds:
+            print("ℹ️  No RSS feeds configured")
+            return []
+
+        items: List[ContentItem] = []
+        for feed in feeds:
+            feed_items = self._fetch_feed(feed)
+            items.extend(feed_items)
+
         return items
-    
-    def _load_feed_urls(self) -> List[str]:
-        """Load RSS feed URLs from sources file (skip comments)."""
-        urls = []
-        try:
-            content = self.sources_file.read_text(encoding="utf-8")
-            for line in content.strip().split("\n"):
-                line = line.strip()
-                # Skip empty lines and comments
+
+    def _load_feeds(self) -> List[Dict[str, object]]:
+        if yaml is not None:
+            for path in self.config_paths:
+                if path.exists():
+                    try:
+                        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+                        rss = payload.get("rss", [])
+                        parsed = []
+                        for entry in rss:
+                            url = (entry or {}).get("url")
+                            if not url:
+                                continue
+                            parsed.append(
+                                {
+                                    "name": (entry or {}).get("name", "RSS Feed"),
+                                    "url": url,
+                                    "source_type": (entry or {}).get("source_type", "unknown"),
+                                    "topics": (entry or {}).get("topics", []),
+                                }
+                            )
+                        if parsed:
+                            print(f"📰 RSS sources loaded from {path}")
+                            return parsed
+                    except Exception as exc:
+                        print(f"⚠️  Failed to parse {path}: {exc}")
+
+        # Legacy fallback
+        if self.legacy_sources_file.exists():
+            feeds = []
+            for raw in self.legacy_sources_file.read_text(encoding="utf-8").splitlines():
+                line = raw.strip()
                 if line and not line.startswith("#"):
-                    urls.append(line)
-        except Exception as e:
-            print(f"✗ Error reading RSS sources: {e}")
-        
-        return urls
-    
-    def _fetch_feed(self, feed_url: str) -> List[ContentItem]:
-        """
-        Fetch recent entries from one RSS feed.
-        
-        Args:
-            feed_url: URL to RSS feed
-        
-        Returns:
-            List of ContentItem objects from this feed
-        """
-        items = []
-        
-        try:
-            feed = feedparser.parse(feed_url)
-            
-            # Check for fetch errors
-            if feed.bozo:
-                print(f"    ⚠️  Feed parsing warning: {feed.bozo_exception}")
-            
-            # Get feed title
-            feed_title = feed.feed.get("title", "Unknown Feed")
-            
-            # Process entries (usually 10-20 recent entries)
-            for entry in feed.entries[:10]:
-                try:
-                    # Extract data
-                    title = entry.get("title", "No Title")
-                    link = entry.get("link", "")
-                    summary = entry.get("summary", "")
-                    author = entry.get("author", feed_title)
-                    
-                    # Parse timestamp
-                    timestamp = self._parse_timestamp(entry)
-                    
-                    # Create ContentItem
-                    content = f"{summary}\n\n[Read more: {link}]"
-                    
-                    item = self._create_item(
-                        title=title,
-                        content=content,
-                        author=author,
-                        timestamp=timestamp,
-                        url=link,
+                    feeds.append(
+                        {
+                            "name": "Legacy RSS",
+                            "url": line,
+                            "source_type": "journalist",
+                            "topics": [],
+                        }
                     )
-                    items.append(item)
-                    
-                except Exception as e:
-                    print(f"    ⚠️  Error parsing entry: {e}")
-        
-        except Exception as e:
-            raise Exception(f"Failed to fetch RSS feed {feed_url}: {e}")
-        
-        return items
-    
-    def _parse_timestamp(self, entry: dict) -> datetime:
-        """Extract and parse timestamp from RSS entry."""
+            if feeds:
+                print(f"📰 RSS sources loaded from {self.legacy_sources_file}")
+            return feeds
+
+        return []
+
+    def _fetch_feed(self, feed_cfg: Dict[str, object]) -> List[ContentItem]:
+        url = str(feed_cfg.get("url"))
+        feed_name = str(feed_cfg.get("name") or "RSS Feed")
+        topics = list(feed_cfg.get("topics") or [])
+        source_bias = map_source_bias(str(feed_cfg.get("source_type", "unknown")))
+
         try:
-            # Try published date first
-            if "published_parsed" in entry:
-                import time
-                return datetime.fromtimestamp(time.mktime(entry.published_parsed))
-            # Fall back to updated
-            elif "updated_parsed" in entry:
-                import time
-                return datetime.fromtimestamp(time.mktime(entry.updated_parsed))
-        except:
-            pass
-        
-        # Default to now if parsing fails
+            feed = feedparser.parse(url)
+        except Exception as exc:
+            print(f"⚠️  RSS fetch failed for {url}: {exc}")
+            return []
+
+        if getattr(feed, "bozo", False):
+            bozo_exception = getattr(feed, "bozo_exception", None)
+            if bozo_exception:
+                print(f"⚠️  RSS parse warning for {url}: {bozo_exception}")
+
+        items: List[ContentItem] = []
+        for entry in getattr(feed, "entries", [])[:15]:
+            title = entry.get("title", "Untitled RSS item")
+            summary = entry.get("summary") or entry.get("description") or ""
+            link = entry.get("link")
+            author = entry.get("author") or feed_name
+            timestamp = self._parse_timestamp(entry)
+
+            item = self._create_item(
+                title=title,
+                content=summary,
+                author=author,
+                timestamp=timestamp,
+                url=link,
+                raw_path=url,
+                source_bias=source_bias,
+                topics=[str(topic).lower() for topic in topics],
+            )
+            items.append(item)
+
+        print(f"  ✓ {feed_name}: {len(items)} items")
+        return items
+
+    @staticmethod
+    def _parse_timestamp(entry: dict) -> datetime:
+        for key in ("published_parsed", "updated_parsed"):
+            parsed = entry.get(key)
+            if parsed:
+                try:
+                    import time
+
+                    return datetime.fromtimestamp(time.mktime(parsed))
+                except Exception:
+                    pass
         return datetime.now()

@@ -1,33 +1,20 @@
-# ============================================================================
-# Daily Insight Agent - Python Dependencies
-# ============================================================================
-# Install with: pip install -r requirements.txt
+# Personal Signal OS dependencies
 
-# Web Framework
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-
-# OpenAI API
+# Core LLM integration (optional, pipeline still runs without API key)
 openai==1.3.0
-httpx==0.27.0
 
-# RSS Parsing
+# RSS parsing
 feedparser==6.0.10
 
-# Environment Variables
+# Environment variables
 python-dotenv==1.0.0
 
-# Database
-# sqlite3 - Included in Python stdlib (no pip install needed)
-
-# Data Validation
-pydantic==2.5.0
-
-# Scheduling (for future background tasks)
-apscheduler==3.10.4
-
-# HTTP Requests (for RSS fetching)
+# HTTP client utilities
 requests==2.31.0
+httpx==0.27.0
+
+# YAML configuration parsing
+PyYAML==6.0.1
 
 # Telegram integration
 telethon==1.36.0

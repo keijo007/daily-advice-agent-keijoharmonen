@@ -1,0 +1,21 @@
+# Personal Signal OS - Example source configuration
+
+rss:
+  - name: "Example Tech Feed"
+    url: "https://example.com/rss"
+    source_type: "journalist"
+    topics: ["technology", "AI"]
+
+local_markdown:
+  diary_dir: "data/personal/diary"
+  goals_file: "data/personal/goals.md"
+  current_state_file: "data/personal/current_state.yaml"
+
+email:
+  enabled: false
+
+calendar:
+  enabled: false
+
+social:
+  enabled: false

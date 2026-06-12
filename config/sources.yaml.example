@@ -1,0 +1,64 @@
+# Personal Signal OS - Configuration
+#
+# RSS and other source definitions
+
+rss:
+  # Example tech/AI sources
+  - name: "Hacker News"
+    url: "https://news.ycombinator.com/rss"
+    source_type: "community"
+    topics: ["technology", "startups", "AI"]
+    relevance_tags: ["building", "founders"]
+
+  - name: "ArXiv: AI"
+    url: "http://arxiv.org/rss/cs.AI"
+    source_type: "research"
+    topics: ["AI", "machine learning", "research"]
+    relevance_tags: ["AI research"]
+
+  - name: "Product Hunt"
+    url: "https://www.producthunt.com/feed.xml"
+    source_type: "community"
+    topics: ["products", "startups"]
+    relevance_tags: ["new products", "innovation"]
+
+  # Add more RSS feeds here
+  # - name: "Your Feed"
+  #   url: "https://example.com/feed"
+  #   source_type: "journalist"  # operator | founder | investor | journalist | research | official | community | personal | unknown
+  #   topics: ["topic1", "topic2"]
+  #   relevance_tags: ["tag1"]
+
+# Local Markdown sources
+local_markdown:
+  diary_dir: "data/personal/diary"  # Directory with daily diary entries
+  goals_file: "data/personal/goals.md"  # Current goals
+  current_state_file: "data/personal/current_state.yaml"  # Current focus and decision deadlines
+
+# Email sources (TODO: integrate)
+email:
+  enabled: false
+  # gmail:
+  #   email: "your-email@gmail.com"
+  #   # Use app-specific password, not your actual password
+  #   # Set env var: GMAIL_APP_PASSWORD
+  # outlook:
+  #   email: "your-email@outlook.com"
+  #   # Set env var: OUTLOOK_PASSWORD
+
+# Calendar sources (TODO: integrate)
+calendar:
+  enabled: false
+  # google_calendar:
+  #   calendar_id: "your-calendar@gmail.com"
+  #   # Set env var: GOOGLE_CALENDAR_TOKEN
+
+# Social media (TODO: integrate)
+social:
+  enabled: false
+  # telegram:
+  #   # Set env var: TELEGRAM_BOT_TOKEN
+  # youtube:
+  #   channels:
+  #     - name: "Channel Name"
+  #       channel_id: "UCxxxxx"

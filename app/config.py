@@ -39,9 +39,16 @@ class Config:
     PROJECT_ROOT = Path(__file__).parent.parent
     DATA_DIR = PROJECT_ROOT / "data"
     DIARY_DIR = DATA_DIR / "diary"
+    PERSONAL_DIR = DATA_DIR / "personal"
+    PERSONAL_DIARY_DIR = PERSONAL_DIR / "diary"
+    PERSONAL_GOALS_FILE = PERSONAL_DIR / "goals.md"
+    PERSONAL_CURRENT_STATE_FILE = PERSONAL_DIR / "current_state.yaml"
     WHATSAPP_DIR = DATA_DIR / "whatsapp_exports"
     GOALS_DIR = DATA_DIR / "goals"
     DB_PATH = DATA_DIR / "insights.db"
+    OUTPUTS_DIR = PROJECT_ROOT / "outputs" / "daily_briefs"
+    SOURCES_YAML = PROJECT_ROOT / "config" / "sources.yaml"
+    SETTINGS_YAML = PROJECT_ROOT / "config" / "settings.yaml"
 
     # ========== OPENAI CONFIGURATION ==========
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
@@ -156,8 +163,10 @@ class Config:
         """Create required directories if they don't exist."""
         for directory in [
             self.DIARY_DIR,
+            self.PERSONAL_DIARY_DIR,
             self.WHATSAPP_DIR,
             self.GOALS_DIR,
+            self.OUTPUTS_DIR,
         ]:
             directory.mkdir(parents=True, exist_ok=True)
 

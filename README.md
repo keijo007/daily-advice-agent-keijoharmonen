@@ -1,185 +1,117 @@
-# Daily Insight Agent - GitHub Actions Edition
+# Personal Signal OS
 
-🤖 **Automated daily insights using AI agents + GitHub Actions + GitHub Pages**
+Practical daily intelligence brief system.
 
-Generates a daily summary page from your goals, diary entries, and other configured sources.
+The project collects selected sources, filters noise, scores useful signals, and writes one daily markdown brief.
 
-This repo is built for GitHub Pages publishing and optional OneDrive upload.
+## What It Produces
 
----
+Output file:
+- `outputs/daily_briefs/YYYY-MM-DD.md`
 
-## 📁 Current project structure
+Daily brief sections:
+1. Top Signals
+2. Opportunities
+3. Claims to Verify
+4. Weak Signals
+5. Thinking Mirror
+6. Recommended Action Today
+7. Ignore / Low Priority
 
-```
-.github/workflows/
-  daily-insight.yml         ← Scheduled pipeline run
-scripts/
-  generate_insight.py       ← Main generator
-  generate_insight_safe.py  ← Safer local workflow helper
-  upload_to_onedrive.py     ← Optional direct upload tool
-app/                        ← Core pipeline, agents, collectors
-data/                       ← Local source files (diary, goals, exports)
-index.html                  ← Published GitHub Pages page
-```
+## Architecture
 
----
+1. Source collectors
+2. Normalization
+3. Storage
+4. Signal scoring
+5. Agent-style analysis modules
+6. Daily brief generation
+7. Feedback capture
 
-## ⚙️ How it works
+## Source Support (MVP)
 
-Daily run flow:
+Working now:
+- RSS feeds from `config/sources.yaml`
+- Local files:
+  - `data/personal/goals.md`
+  - `data/personal/current_state.yaml`
+  - `data/personal/diary/*.md`
 
-1. GitHub Actions triggers `scripts/generate_insight.py`
-2. `DailyPipeline` collects diary/goals/feeds
-3. Reader, Reflection, and Coach agents analyze the data
-4. `index.html` is generated
-5. The repository is updated and GitHub Pages publishes the page
+Prepared stubs (no credentials required yet):
+- Gmail
+- Outlook
+- Telegram
+- Calendar
+- YouTube
 
-> Local `data/daily_insights` storage is no longer used for daily output.
+## Configuration
 
----
+Copy and edit examples:
+- `config/sources.example.yaml` -> `config/sources.yaml`
+- `config/settings.example.yaml` -> `config/settings.yaml`
 
-## 🔧 Configuration
+Required personal files:
+- `data/personal/goals.md`
+- `data/personal/current_state.yaml`
+- `data/personal/diary/`
 
-### OneDrive upload (optional)
+## Run Commands
 
-This repo can optionally write daily insight output to OneDrive.
+Preferred (requested):
+- `python -m src.main collect`
+- `python -m src.main score`
+- `python -m src.main brief`
+- `python -m src.main run-daily`
+- `python -m src.main feedback --item-id <id> --rating + --note "optional"`
 
-Required environment variables:
+Equivalent app entry:
+- `python -m app.signal_os_main run-daily`
 
-- `OPENAI_API_KEY`
-- `UPLOAD_DAILY_INSIGHTS_TO_ONEDRIVE=true`
+## Storage
 
-OneDrive upload targets:
+SQLite:
+- `data/insights.db`
 
-- `ONEDRIVE_DAILY_INSIGHTS_PATH`
-- `ONEDRIVE_DAILY_INSIGHTS_SHARE_URL`
+JSONL exports:
+- `data/raw_items.jsonl`
+- `data/normalized_items.jsonl`
+- `data/scored_items.jsonl`
+- `data/feedback.jsonl`
 
-If explained by your setup, provide Azure credentials too:
+Markdown output:
+- `outputs/daily_briefs/`
 
-- `AZURE_CLIENT_ID`
-- `AZURE_CLIENT_SECRET`
-- `AZURE_TENANT_ID`
+## Scoring Model
 
----
+Transparent weighted score:
 
-## 📚 Setup
+`signal_score = 2.0*relevance + 1.5*actionability + 1.5*deadline_urgency + 1.2*novelty + 1.0*source_quality + 1.0*repeated_across_sources + 0.8*personal_fit - 1.5*distraction_risk - 1.0*weak_evidence`
 
-### 1. Configure GitHub Secrets
+Classification:
+- SIGNAL
+- WEAK_SIGNAL
+- OPPORTUNITY
+- VERIFY
+- NOISE
 
-Go to your repository settings and add:
+## Privacy Notes
 
-- `OPENAI_API_KEY`
-- Optional OneDrive secrets if you want cloud upload
+- Diary/current_state are processed locally by default.
+- Diary is not sent to external LLM unless `privacy.allow_external_llm_for_diary: true`.
+- No credentials are hardcoded; use environment variables.
 
-### 2. Run locally
+## Feedback
 
-```bash
-python scripts/generate_insight.py
-```
+Store signal quality feedback in `data/feedback.jsonl`:
+- `+` useful
+- `-` useless
+- `?` maybe later
+- `!` very important
 
-or for a safer helper:
+Future scoring updates can use this feedback to tune weights and source/topic relevance.
 
-```bash
-python scripts/generate_insight_safe.py
-```
+## Current Limitations
 
-### 3. GitHub Pages
-
-Configure Pages:
-
-- Branch: `main`
-- Folder: `/`
-
-Published URL:
-
-- `https://yourusername.github.io/daily-insights/`
-
----
-
-## 💾 Storage and publishing
-
-This project generates `index.html` as the main published output.
-
-- `index.html` is the GitHub Pages artifact
-- OneDrive upload is optional and controlled by env vars
-- No local daily insight JSON file is required for normal operation
-
----
-
-## 🐛 Troubleshooting
-
-### Workflow fails
-
-1. Open Actions logs
-2. Confirm `OPENAI_API_KEY` is set correctly
-3. Run locally with `python scripts/generate_insight.py`
-
-### OpenAI key issue
-
-- Secret name must be exactly `OPENAI_API_KEY`
-- No leading or trailing spaces
-
-### GitHub Pages not updating
-
-- Check Pages settings
-- Wait 1-2 minutes after push
-
----
-
-## 💰 Cost estimate
-
-| Component | Cost |
-|-----------|------|
-| GitHub Actions | Free within runner limits |
-| GitHub Pages | Free |
-| OpenAI API | Small monthly cost depending on usage |
-| Domain | Optional (€5-10/year) |
-
----
-
-## 📖 Documentation
-
-- [`.github/README.md`](.github/README.md) - GitHub Actions guide
-- [`BUDGET_DEPLOYMENT.md`](BUDGET_DEPLOYMENT.md) - Deployment notes
-- [`GITHUB_ACTIONS_SAFE_SETUP.md`](GITHUB_ACTIONS_SAFE_SETUP.md) - Safe setup guide
-- [`GITHUB_ACTIONS_SUMMARY.md`](GITHUB_ACTIONS_SUMMARY.md) - Workflow summary
-- [`ARCHITECTURE.md`](ARCHITECTURE.md) - System architecture
-
----
-
-## ✅ Checklist
-
-- [ ] `OPENAI_API_KEY` set
-- [ ] Workflow tested
-- [ ] GitHub Pages configured
-- [ ] OneDrive upload configured if desired
-
----
-
-## 🎉 Ready
-
-The system publishes a daily AI-generated insight page automatically.
-
----
-
-## Notes for developers
-
-This repo is built around:
-
-- `app/services/daily_pipeline.py`
-- `app/agents/reader_agent.py`
-- `app/agents/reflection_agent.py`
-- `app/agents/coach_agent.py`
-
-Use the `scripts/upload_to_onedrive.py` tool only if you want a direct OneDrive backup.
-
-
-This README explains:
-- ✅ What data goes in and where
-- ✅ Where it's stored and how
-- ✅ Where OpenAI API is called
-- ✅ How the daily tip is generated
-- ✅ How the phone shortcut works
-- ✅ What to do next to make it work
-
-Happy building! 🚀
+- Repetition detection is heuristic (title/url/source overlap).
+- Claim verification is guidance-level (no automated fact-check browsing yet).
+- Stub integrations are placeholders until official API setup is added.

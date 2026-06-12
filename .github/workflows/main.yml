@@ -1,4 +1,4 @@
-name: Daily Insight Generator
+name: Personal Signal OS Daily Brief
 
 on:
   schedule:
@@ -13,7 +13,7 @@ permissions:
   packages: write
 
 jobs:
-  generate-insight:
+  generate-brief:
     runs-on: ubuntu-latest
     
     steps:
@@ -31,7 +31,7 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
       
-      - name: Generate daily insight
+      - name: Generate daily brief
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -59,12 +59,12 @@ jobs:
         run: |
           python scripts/generate_insight_safe.py
       
-      - name: Commit and push results
+      - name: Commit and push brief output
         run: |
           git config user.email "action@github.com"
-          git config user.name "Daily Insight Bot"
-          git add index.html
-          git commit -m "Daily insight $(date +%Y-%m-%d)" || echo "No changes to commit"
+          git config user.name "Personal Signal OS Bot"
+          git add outputs/daily_briefs data/raw_items.jsonl data/normalized_items.jsonl data/scored_items.jsonl data/feedback.jsonl
+          git commit -m "Daily brief $(date +%Y-%m-%d)" || echo "No changes to commit"
           git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -99,5 +99,5 @@ jobs:
       
       - name: Display generated files
         run: |
-          echo " Latest index:"
-          head -20 index.html || echo "No index.html"
+          echo "Latest brief files:"
+          ls -la outputs/daily_briefs || echo "No brief directory"
