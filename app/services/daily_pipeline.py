@@ -142,6 +142,18 @@ class DailyPipeline:
         max_signals = int(brief_cfg.get("max_top_signals", 5))
         max_weak = int(brief_cfg.get("max_weak_signals", 5))
 
+        recent_briefs = self.storage.get_recent_briefs(limit=7)
+        feedback_counts = self._build_feedback_map()
+
+        # Apply historical feedback memory before selecting top signals.
+        for scored in scored_items:
+            item_id = scored.item.compute_hash()
+            fb = feedback_counts.get(item_id, {"+": 0, "-": 0, "?": 0, "!": 0})
+            scored.signal_score += 0.3 * fb.get("+", 0)
+            scored.signal_score += 0.6 * fb.get("!", 0)
+            scored.signal_score -= 0.4 * fb.get("-", 0)
+            scored.signal_score = max(0.0, min(10.0, scored.signal_score))
+
         sorted_scored = sorted(scored_items, key=lambda s: s.signal_score, reverse=True)
         signal_candidates = [s for s in sorted_scored if s.signal_type != SignalType.NOISE][:max_signals]
         weak_candidates = [s for s in sorted_scored if s.signal_type == SignalType.WEAK_SIGNAL][:max_weak]
@@ -189,18 +201,6 @@ class DailyPipeline:
             goals,
             context_with_history,
         )
-
-        recent_briefs = self.storage.get_recent_briefs(limit=7)
-        feedback_counts = self._build_feedback_map()
-
-        # Boost/deprioritize scored items based on historical feedback memory.
-        for scored in scored_items:
-            item_id = scored.item.compute_hash()
-            fb = feedback_counts.get(item_id, {"+": 0, "-": 0, "!": 0})
-            scored.signal_score += 0.3 * fb.get("+", 0)
-            scored.signal_score += 0.6 * fb.get("!", 0)
-            scored.signal_score -= 0.4 * fb.get("-", 0)
-            scored.signal_score = max(0.0, min(10.0, scored.signal_score))
 
         synthesizer = BriefSynthesizer(openai_client=self.openai_client)
         brief = synthesizer.synthesize(
