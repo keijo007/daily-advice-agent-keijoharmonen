@@ -1,5 +1,7 @@
 # Personal Signal OS
 
+### One such text about yourself can be better during a break than reading LinkedIn, X, Telegram etc. post. You only have to set your goals, then open the app (for exmpl. Notes) and read your advice.
+### The agent reads the same information you do: your diary, (WhatsApp)(not yet), Telegram, YouTube transcriptions, news and more. Every day, it combines your goals with your real-time information and give you signal filtered summary and advice(for example it can detect your thinking biases and help better uderstand yourself). Sometimes, that can be exactly what you need. 
 Practical daily intelligence brief system.
 
 The project collects selected sources, filters noise, scores useful signals, and writes one daily markdown brief.
