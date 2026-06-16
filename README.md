@@ -30,6 +30,19 @@ Daily brief sections:
 6. Daily brief generation
 7. Feedback capture
 
+## How It Works
+
+The pipeline is intentionally transparent and easy to inspect.
+
+1. Collectors read from local notes, diaries, exports, RSS feeds, and optional connected services.
+2. Normalization converts every input into a shared internal item format.
+3. Deduplication removes repeated or overlapping content.
+4. Storage preserves raw, normalized, and scored data for traceability.
+5. Signal scoring ranks items by relevance, actionability, urgency, novelty, and personal fit.
+6. Analysis agents turn ranked items into interpretation, reflection, and advice.
+7. The brief renderer writes one markdown brief for the day.
+8. Feedback can later improve ranking and filtering behavior.
+   
 ## Source Support (MVP)
 
 Working now:
@@ -72,19 +85,6 @@ Most information tools tell you what happened somewhere. This one is designed to
 - It mirrors your own patterns, not only the outside world.
 
 The output is meant to feel closer to a personal operating system than a generic news digest.
-
-## How It Works
-
-The pipeline is intentionally transparent and easy to inspect.
-
-1. Collectors read from local notes, diaries, exports, RSS feeds, and optional connected services.
-2. Normalization converts every input into a shared internal item format.
-3. Deduplication removes repeated or overlapping content.
-4. Storage preserves raw, normalized, and scored data for traceability.
-5. Signal scoring ranks items by relevance, actionability, urgency, novelty, and personal fit.
-6. Analysis agents turn ranked items into interpretation, reflection, and advice.
-7. The brief renderer writes one markdown brief for the day.
-8. Feedback can later improve ranking and filtering behavior.
 
 ## Agent Architecture
 
