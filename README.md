@@ -102,8 +102,7 @@ Current output classes:
 
 ### Privacy And Control
 
-- Diary and current-state material are processed locally by default.
-- Diary content is not sent to an external LLM unless `privacy.allow_external_llm_for_diary: true`.
-- Credentials are not hardcoded into the repository.
-- The system can remain fully local if you only use file-based inputs.
+- Because Here are a lot personal... Diary content is not sent to an external LLM unless it isn't proof persovality check.
+- Credentials are not hardcoded into the repository. ( in GitHub secrets)
+- All information are in OndeDrive but not yet and you can see briefs in repository.
 
