@@ -39,7 +39,7 @@ Reflection agent generates a “Thinking Mirror”, which is a lightweight perso
 
 Brief Synthesizer combines all of that into the final daily brief and decides the single recommended action for today.
 
-# PIPELINE
+## PIPELINE
 
 1. Collectors read from local notes, diaries, exports, RSS feeds, and optional connected servicces.
 2. Normalisation converts every input into a shared internal item format.
@@ -50,7 +50,7 @@ Brief Synthesizer combines all of that into the final daily brief and decides th
 7. The brief renderer writes one markdown brief for the day.
 8. Feedback can later improve ranking and filtering behavior.
 
-### Sources
+## Sources
 
 - ONEDRIVE files:
 `data/personal/goals.md`
@@ -65,7 +65,7 @@ OTHER:
 - Calendar (not yet)
 - YouTube (not yoe)
 
-### Why This Project Exists (For Building AI cource)
+## Why This Project Exists (For Building AI cource)
 
 Most information tools tell you what happened somewhere. This one is designed to tell you what matters for you today.
 
@@ -77,7 +77,7 @@ Most information tools tell you what happened somewhere. This one is designed to
 
 The output is meant to feel closer to a personal operating system than a generic news digest.
 
-### What The Daily Brief should Contains (But so unstable) and scoring
+## What The Daily Brief should Contains (But so unstable) and scoring
 
 Each generated brief is structured for short, high-value reading during a break.
 
