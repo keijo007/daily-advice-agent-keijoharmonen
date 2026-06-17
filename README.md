@@ -69,13 +69,11 @@ OTHER:
 
 Most information tools tell you what happened somewhere. This one is designed to tell you what matters for you today.
 
-- It combines goals, diary context, and selected feeds into one readable daily output.
-- It filters noise instead of rewarding more scrolling.
-- It separates promising opportunities from weak evidence.
-- It flags claims that should be verified before you act on them.
-- It mirrors your own patterns, not only the outside world.
-
-The output is meant to feel closer to a personal operating system than a generic news digest.
+It combines goals, diary context, and selected feeds into one readable daily output.
+-filters noise instead of rewarding more scrolling.
+separates promising opportunities from weak evidence.
+-flags claims that should be verified before you act on them.
+-mirrors your own patterns, not only the outside world.
 
 ## What The Daily Brief should Contains (But so unstable) and scoring
 
